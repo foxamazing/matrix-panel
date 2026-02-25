@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+:root {
+  /* 基础颜色变量与主题控制 (由 JS 动态覆盖) */
+  --background: #ffffff;
+  --foreground: #1d1d1f;
+
+  /* 动态主题色 (由 JS 注入) */
+  --color-theme: #71717a;
+  --color-theme-soft: rgba(var(--color-theme), 0.1);
+  --color-theme-active: var(--color-theme);
+
+  /* 表面与层次 - 默认浅色 */
+  --surface-1: rgba(255, 255, 255, 0.03);
+  --surface-2: rgba(255, 255, 255, 0.06);
+  --surface-3: rgba(255, 255, 255, 0.1);
+
+  /* 文字颜色 - 默认浅色 */
+  --text-primary: #1d1d1f;
+  --text-secondary: rgba(29, 29, 31, 0.7);
+  --text-muted: rgba(29, 29, 31, 0.4);
+
+  /* 边框与透明度 */
+  --border-primary: rgba(0, 0, 0, 0.1);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --glass-border-highlight: rgba(255, 255, 255, 0.5);
+
+  /* 毛玻璃效果核心变量 */
+  --glass-bg-base: rgba(255, 255, 255, 0.05);
+  --glass-bg-hover: rgba(255, 255, 255, 0.15);
+  --glass-blur: blur(8px) saturate(180%);
+}
+
+.dark {
+  --background: #050505;
+  --foreground: #ffffff;
+
+  --surface-1: rgba(20, 20, 20, 0.05);
+  --surface-2: rgba(30, 30, 30, 0.1);
+  --surface-3: rgba(40, 40, 40, 0.15);
+
+  /* 文字颜色 - 深色模式 */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.4);
+
+  /* 边框与透明度 - 深色模式 */
+  --border-primary: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-highlight: rgba(255, 255, 255, 0.2);
+
+  /* 毛玻璃效果核心变量 - 深色模式 */
+  --glass-bg-base: rgba(18, 18, 22, 0.05);
+  --glass-bg-hover: rgba(28, 28, 32, 0.15);
+}
+
+@theme inline {
+  --font-pixel: "Ark Pixel 12px Monospaced ZhCn", monospace;
+  --color-theme: var(--color-theme);
+}
+
+html,
+body {
+  background-color: var(--background, #000) !important;
+  color: var(--text-primary);
+}
+
+#root {
+  background-color: transparent !important;
+  color: inherit;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 统一毛玻璃面板样式 */
+.glass-panel {
+  background-color: var(--glass-bg-base);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel:hover {
+  background-color: var(--glass-bg-hover);
+  border-color: var(--glass-border-highlight);
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
