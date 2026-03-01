@@ -91,6 +91,10 @@ const LockScreen: React.FC<LockScreenProps> = ({ isMobile, variant = 'lock' }) =
       if (saved) {
         const locs = JSON.parse(saved);
         const loc = locs[savedIdx] || locs[0];
+        if (loc?.id === 'gps') {
+          handleLocate();
+          return;
+        }
         if (loc) { fetchWeatherFromCoords(loc.lat, loc.lon, loc.name); return; }
       }
     } catch { }
@@ -129,7 +133,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ isMobile, variant = 'lock' }) =
           className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden font-sans select-none"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.05, filter: 'blur(12px)', transition: { duration: 0.8 } }}
+          exit={{ opacity: 0, scale: 1.15, filter: 'blur(24px) brightness(1.5)', transition: { duration: 1.2, ease: [0.22, 1, 0.36, 1] } }}
           onClick={() => setShowLoginForm(!showLoginForm)}
         >
           <div className="absolute inset-0 z-0 overflow-hidden bg-[var(--glass-bg-base)]">
@@ -155,29 +159,31 @@ const LockScreen: React.FC<LockScreenProps> = ({ isMobile, variant = 'lock' }) =
           </div>
 
           <motion.div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center text-[var(--text-primary)]"
+            className="absolute bottom-16 left-8 md:bottom-24 md:left-24 z-10 flex flex-col items-start text-[var(--text-primary)] pointer-events-none"
             animate={{
-              y: showLoginForm ? (isMobile ? '-130px' : '-180px') : '0px',
-              scale: showLoginForm ? 0.8 : 1.1
+              y: showLoginForm ? (isMobile ? '-80px' : '-40px') : '0px',
+              opacity: showLoginForm ? (isMobile ? 0 : 0.2) : 1,
+              scale: showLoginForm ? 0.95 : 1,
+              x: showLoginForm ? (isMobile ? '0px' : '-40px') : '0px'
             }}
-            transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           >
-            <h1 className="text-7xl md:text-9xl font-medium tracking-tight tabular-nums leading-none mb-4">
+            <h1 className="text-[5.5rem] md:text-[12rem] font-black tracking-tighter tabular-nums leading-none mb-3 md:mb-6 drop-shadow-2xl mix-blend-plus-lighter">
               {time.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}
             </h1>
-            <div className="flex items-center gap-3 px-6 py-2 rounded-full glass-panel shadow-xl font-bold border border-white/10">
-              <span>{time.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', weekday: 'short' })}</span>
+            <div className="flex items-center gap-3 px-6 py-3 md:px-8 md:py-4 rounded-[2rem] glass-panel shadow-2xl font-bold border border-white/20 backdrop-blur-2xl bg-black/20 text-sm md:text-lg pointer-events-auto">
+              <span className="tracking-widest uppercase">{time.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', weekday: 'short' })}</span>
               {weather && (
                 <>
-                  <div className="w-1 h-1 rounded-full bg-current opacity-40" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-current opacity-40 mx-1 md:mx-2" />
                   <div className="flex items-center gap-2">
-                    <weather.icon className="w-5 h-5 text-theme" />
+                    <weather.icon className="w-5 h-5 md:w-6 md:h-6 text-theme" />
                     <span>{weather.temp}°C</span>
                     <span className="opacity-60">{weather.city}</span>
                   </div>
                 </>
               )}
-              <button onClick={e => { e.stopPropagation(); handleLocate(); }} className={`ml-2 opacity-60 hover:opacity-100 transition-opacity ${locating ? 'animate-spin' : ''}`}><LocateFixed className="w-4 h-4" /></button>
+              <button autoFocus={false} onClick={e => { e.stopPropagation(); handleLocate(); }} className={`ml-2 md:ml-4 opacity-50 hover:opacity-100 transition-all hover:scale-110 active:scale-95 ${locating ? 'animate-spin' : ''}`}><LocateFixed className="w-4 h-4 md:w-5 md:h-5" /></button>
             </div>
           </motion.div>
 
@@ -191,7 +197,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ isMobile, variant = 'lock' }) =
                 exit={{ opacity: 0, y: 40 }}
                 onClick={e => e.stopPropagation()}
               >
-                <div className="glass-panel rounded-[2rem] p-8 shadow-2xl border border-white/10">
+                <div className="glass-panel rounded-[2.5rem] p-10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] border border-white/20 backdrop-blur-3xl bg-black/30 dark:bg-black/50">
                   <h2 className="text-2xl font-black text-center mb-8 tracking-widest text-[var(--text-primary)]">{variant === 'login' ? t.adminLogin : 'UNLOCK SYSTEM'}</h2>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="relative group">

@@ -1,6 +1,6 @@
 import React from 'react';
 import { AppConfig } from '../../types';
-import { Monitor, Smartphone, Globe, Clock, Palette, Sparkles, Languages } from 'lucide-react';
+import { Globe, Clock, Sparkles } from 'lucide-react';
 
 interface BasicTabProps {
   config: AppConfig;
@@ -83,11 +83,6 @@ const BasicTab: React.FC<BasicTabProps> = ({ config, updateConfig, t }) => {
             checked={!!config.showSeconds}
             onToggle={() => updateConfig({ ...config, showSeconds: !config.showSeconds })}
           />
-          <ToggleItem
-            label="12小时制"
-            checked={!!config.use12HourFormat}
-            onToggle={() => updateConfig({ ...config, use12HourFormat: !config.use12HourFormat })}
-          />
         </div>
       </BentoCard>
 
@@ -108,36 +103,6 @@ const BasicTab: React.FC<BasicTabProps> = ({ config, updateConfig, t }) => {
             desc="Rainbow Animation"
             checked={!!config.pixelRainbow}
             onToggle={() => updateConfig({ ...config, pixelRainbow: !config.pixelRainbow })}
-          />
-        </div>
-      </BentoCard>
-
-      {/* 4. Display Logic */}
-      <BentoCard title="显示逻辑" icon={Monitor} className="md:col-span-2">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
-          <ToggleItem
-            label="自动深色模式"
-            desc="根据日出日落自动切换"
-            checked={!!config.autoDarkMode}
-            onToggle={() => updateConfig({ ...config, autoDarkMode: !config.autoDarkMode })}
-          />
-          <ToggleItem
-            label="记忆上次状态"
-            desc="恢复此前的面板选项"
-            checked={true}
-            onToggle={() => { }}
-          />
-          <ToggleItem
-            label="沉浸式顶栏"
-            desc="隐藏浏览器额外装饰"
-            checked={!!config.immersiveMode}
-            onToggle={() => updateConfig({ ...config, immersiveMode: !config.immersiveMode })}
-          />
-          <ToggleItem
-            label="性能优先模式"
-            desc="减少背景动画与特效"
-            checked={!!config.performanceMode}
-            onToggle={() => updateConfig({ ...config, performanceMode: !config.performanceMode })}
           />
         </div>
       </BentoCard>

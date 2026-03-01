@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { UserCircle, UserPlus, User, PenSquare, Trash2, X, Upload, Eye, EyeOff, MonitorOff, AlertTriangle, RefreshCw, Shield, Key, ExternalLink } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { AppConfig, User as UserType } from '../../types';
 import { compressImage } from '../../utils/image';
 import { apiClient } from '../../services/client';
@@ -269,18 +270,20 @@ const SecurityTab: React.FC<SecurityTabProps> = ({ config, updateConfig, t, curr
             </div>
           </div>
 
-          <div className="flex items-start gap-6 p-6 rounded-3xl bg-red-500/5 border border-red-500/10 hover:border-red-500 transition-all group/rd">
-            <div className="w-14 h-14 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center shrink-0 group-hover/rd:-rotate-6 transition-transform">
-              <RefreshCw className="w-7 h-7" />
-            </div>
-            <div className="space-y-4">
-              <div>
-                <h4 className="text-[16px] font-black text-red-500 tracking-tight">恢复出厂配置</h4>
-                <p className="text-[12px] font-medium text-red-500/60 mt-1">该操作将永久删除：本地配置、上传壁纸及自定义引擎。无法撤销。</p>
+          {isAdmin && (
+            <div className="flex items-start gap-6 p-6 rounded-3xl bg-red-500/5 border border-red-500/10 hover:border-red-500 transition-all group/rd">
+              <div className="w-14 h-14 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center shrink-0 group-hover/rd:-rotate-6 transition-transform">
+                <RefreshCw className="w-7 h-7" />
               </div>
-              <button onClick={onReset} className="px-6 py-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-[12px] font-black uppercase tracking-wider text-red-500 hover:bg-red-500 hover:text-white transition-all">重置核心</button>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-[16px] font-black text-red-500 tracking-tight">恢复出厂配置</h4>
+                  <p className="text-[12px] font-medium text-red-500/60 mt-1">该操作将永久删除：本地配置、上传壁纸及自定义引擎。无法撤销。</p>
+                </div>
+                <button onClick={onReset} className="px-6 py-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-[12px] font-black uppercase tracking-wider text-red-500 hover:bg-red-500 hover:text-white transition-all">重置核心</button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </BentoCard>
 

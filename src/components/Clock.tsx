@@ -72,7 +72,7 @@ const Clock: React.FC = () => {
     : 'text-xs sm:text-sm md:text-sm font-bold tracking-[0.2em] mt-1 md:mt-2 uppercase opacity-80 text-adaptive';
 
   return (
-    <div className="flex flex-col items-center gap-3 mb-6 select-none animate-fade-in text-adaptive-isolate">
+    <div className="flex flex-col items-center gap-3 select-none animate-fade-in text-adaptive-isolate">
       <div className="flex flex-col md:flex-row items-center md:items-baseline gap-4 md:gap-8">
         <div className="flex items-center gap-4">
           {siteLogo && (

@@ -13,6 +13,21 @@ export const useAppConfig = () => {
       if ('monitorUrl' in parsed) {
         delete (parsed as any).monitorUrl;
       }
+      if ('autoDarkMode' in parsed) {
+        delete (parsed as any).autoDarkMode;
+      }
+      if ('immersiveMode' in parsed) {
+        delete (parsed as any).immersiveMode;
+      }
+      if ('performanceMode' in parsed) {
+        delete (parsed as any).performanceMode;
+      }
+      if ('uiStyle' in parsed) {
+        delete (parsed as any).uiStyle;
+      }
+      if ('use12HourFormat' in parsed) {
+        delete (parsed as any).use12HourFormat;
+      }
 
       if (!(parsed as any).users || !Array.isArray((parsed as any).users)) {
         (parsed as any).users = [
@@ -54,7 +69,16 @@ export const useAppConfig = () => {
   }, []);
 
   const buildRemoteValue = useCallback((cfg: AppConfig) => {
-    const { adminPassword: _adminPassword, users: _users, ...rest } = cfg as any;
+    const {
+      adminPassword: _adminPassword,
+      users: _users,
+      autoDarkMode: _autoDarkMode,
+      immersiveMode: _immersiveMode,
+      performanceMode: _performanceMode,
+      uiStyle: _uiStyle,
+      use12HourFormat: _use12HourFormat,
+      ...rest
+    } = cfg as any;
     return rest;
   }, []);
 
@@ -64,9 +88,9 @@ export const useAppConfig = () => {
       let parsed = null;
       if (saved) {
         parsed = JSON.parse(saved);
-        // Aggressive force-reset for transparency settings to ensure "masks" are removed
-        if (parsed.appAreaOpacity > 0.2) parsed.appAreaOpacity = 0.05;
-        if (parsed.bgOpacity < 0.9) parsed.bgOpacity = 1.0;
+        // Safety check: prevent complete transparency/black screen
+        if ((parsed.bgOpacity ?? 1) < 0.1) parsed.bgOpacity = 0.5;
+        if ((parsed.appAreaOpacity ?? 1) < 0.05) parsed.appAreaOpacity = 0.8;
       }
       return buildConfig(parsed);
     } catch (e) {
@@ -127,8 +151,13 @@ export const useAppConfig = () => {
 
       const {
         adminPassword: _adminPassword,
+        autoDarkMode: _autoDarkMode,
+        immersiveMode: _immersiveMode,
+        performanceMode: _performanceMode,
+        uiStyle: _uiStyle,
+        use12HourFormat: _use12HourFormat,
         ...safeConfig
-      } = config;
+      } = config as any;
 
       localStorage.setItem('nas_nav_config', JSON.stringify({ ...safeConfig, users: safeUsers }));
     } catch (e) {
@@ -202,11 +231,11 @@ export const useAppConfig = () => {
       document.head.appendChild(styleTag);
     }
 
-    const pixelAssetsBase = '/Pixel';
+    const pixelAssetsBase = '/fonts/ark-pixel';
     styleTag.innerHTML = `
       @font-face {
         font-family: 'ArkPixelLocal';
-        src: url('${pixelAssetsBase}/ark-pixel-12px-monospaced-zh_cn.ttf') format('truetype');
+        src: url('${pixelAssetsBase}/ark-pixel-12px-monospaced-zh_cn.ttf.woff2') format('woff2');
         font-display: swap;
       }
       .font-pixel-dynamic, .font-pixel-dynamic * {
@@ -238,7 +267,13 @@ export const useAppConfig = () => {
   }, [buildRemoteValue, config]);
 
   const updateConfig = (newConfig: AppConfig | ((prev: AppConfig) => AppConfig)) => {
-    setConfig(newConfig);
+    setConfig(prev => {
+      let next = typeof newConfig === 'function' ? newConfig(prev) : newConfig;
+      // Safety guard: prevent invalid opacity
+      if ((next.bgOpacity ?? 1) < 0.1) next.bgOpacity = 0.5;
+      if ((next.appAreaOpacity ?? 1) < 0.05) next.appAreaOpacity = 0.8;
+      return next;
+    });
   };
 
   const contextValue = useMemo(() => ({ config, updateConfig }), [config]);

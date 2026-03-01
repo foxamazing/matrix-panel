@@ -17,6 +17,7 @@ import (
 	"matrix-panel/lib/cmn"
 	"matrix-panel/models"
 	"matrix-panel/structs"
+	ws "matrix-panel/websocket"
 	"os"
 	"time"
 
@@ -92,6 +93,11 @@ func InitApp() error {
 
 	// Start background monitoring
 	systemMonitor.Start(global.SystemMonitor, 5*time.Second)
+
+	// 初始化 WebSocket Hub
+	wsHub := ws.NewHub()
+	global.WSHub = wsHub
+	go wsHub.Run()
 
 	return nil
 }

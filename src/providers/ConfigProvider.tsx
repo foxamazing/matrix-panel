@@ -7,6 +7,7 @@ interface ConfigContextType {
     config: AppConfig;
     updateConfig: (newConfig: AppConfig | ((prev: AppConfig) => AppConfig)) => void;
     loadRemoteConfig: () => Promise<void>;
+    setIsSavingDisabled: (disabled: boolean) => void;
 }
 
 const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
@@ -16,6 +17,11 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         try {
             const parsed = raw && typeof raw === 'object' ? { ...raw } : {};
             if ('monitorUrl' in parsed) delete (parsed as any).monitorUrl;
+            if ('autoDarkMode' in parsed) delete (parsed as any).autoDarkMode;
+            if ('immersiveMode' in parsed) delete (parsed as any).immersiveMode;
+            if ('performanceMode' in parsed) delete (parsed as any).performanceMode;
+            if ('uiStyle' in parsed) delete (parsed as any).uiStyle;
+            if ('use12HourFormat' in parsed) delete (parsed as any).use12HourFormat;
 
             if (!(parsed as any).users || !Array.isArray((parsed as any).users)) {
                 (parsed as any).users = [
@@ -57,7 +63,16 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }, []);
 
     const buildRemoteValue = useCallback((cfg: AppConfig) => {
-        const { adminPassword: _adminPassword, users: _users, ...rest } = cfg as any;
+        const {
+            adminPassword: _adminPassword,
+            users: _users,
+            autoDarkMode: _autoDarkMode,
+            immersiveMode: _immersiveMode,
+            performanceMode: _performanceMode,
+            uiStyle: _uiStyle,
+            use12HourFormat: _use12HourFormat,
+            ...rest
+        } = cfg as any;
         return rest;
     }, []);
 
@@ -75,6 +90,8 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             return DEFAULT_CONFIG;
         }
     });
+
+    const [isSavingDisabled, setIsSavingDisabled] = useState(false);
 
     const remoteName = 'nas_nav_config';
     const lastRemoteSavedRef = useRef<string | null>(null);
@@ -111,20 +128,21 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const serialized = JSON.stringify(buildRemoteValue(config));
         localStorage.setItem('nas_nav_config', serialized);
 
-        if (remoteLoadDoneRef.current && serialized !== lastRemoteSavedRef.current) {
+        if (remoteLoadDoneRef.current && !isSavingDisabled && serialized !== lastRemoteSavedRef.current) {
             const timer = setTimeout(() => {
                 void apiClient.post('/system/moduleConfig/save', { name: remoteName, value: buildRemoteValue(config) })
-                    .then(() => { lastRemoteSavedRef.current = serialized; });
+                    .then(() => { lastRemoteSavedRef.current = serialized; })
+                    .catch(() => { /* Silent catch for background saves */ });
             }, 1000);
             return () => clearTimeout(timer);
         }
-    }, [config, buildRemoteValue]);
+    }, [config, buildRemoteValue, isSavingDisabled]);
 
     const updateConfig = useCallback((newConfig: AppConfig | ((prev: AppConfig) => AppConfig)) => {
         setConfig(newConfig);
     }, []);
 
-    const value = useMemo(() => ({ config, updateConfig, loadRemoteConfig }), [config, updateConfig, loadRemoteConfig]);
+    const value = useMemo(() => ({ config, updateConfig, loadRemoteConfig, setIsSavingDisabled }), [config, updateConfig, loadRemoteConfig, setIsSavingDisabled]);
 
     return <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>;
 };

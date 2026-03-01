@@ -102,7 +102,7 @@ docker run -d --name matrix-panel \
 访问：`http://<宿主机IP>:8999/`
 
 ### Docker Compose
-见项目根目录下的 [docker-compose.yml](docker-compose.yml)。
+见项目根目录下的 [docker-compose.yml](deployment/docker/docker-compose.yml)。
 
 ## ⚙️ 配置说明
 

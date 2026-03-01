@@ -1,8 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, RotateCw, Square, X } from 'lucide-react';
+import { Play, RotateCw, Square, X, Save, ArrowRight } from 'lucide-react';
 import { apiClient } from '../services/client';
 import { DockerContainerInfo } from '../types';
+import { useTheme } from '../providers/ThemeProvider';
+import Button from './ui/Button';
+import InputField from './ui/InputField';
 
 interface Field {
   name: string;
@@ -24,6 +27,8 @@ interface ActionModalProps {
 }
 
 const ActionModal: React.FC<ActionModalProps> = ({ isOpen, onClose, onSubmit, title, fields, themeColor }) => {
+  const { themeConfig } = useTheme();
+  const { effects } = themeConfig;
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [iconTouched, setIconTouched] = useState(false);
   const lastFetchedUrlRef = useRef<string>('');
@@ -119,7 +124,6 @@ const ActionModal: React.FC<ActionModalProps> = ({ isOpen, onClose, onSubmit, ti
 
   const previewDockerEnabled = Boolean(formData.dockerEnabled);
   const previewDockerContainer = String(formData.dockerContainer ?? '').trim();
-  const previewDockerShowControls = Boolean(formData.dockerShowControls);
 
   const resolvePreviewDockerInfo = () => {
     if (!previewDockerEnabled) return null;
@@ -133,17 +137,6 @@ const ActionModal: React.FC<ActionModalProps> = ({ isOpen, onClose, onSubmit, ti
 
   const previewDockerInfo = resolvePreviewDockerInfo();
   const previewDockerRunning = previewDockerInfo?.state === 'running';
-  const previewCpuPercent = typeof previewDockerInfo?.cpuPercent === 'number' ? previewDockerInfo.cpuPercent : null;
-  const previewMemPercent = typeof previewDockerInfo?.memPercent === 'number' ? previewDockerInfo.memPercent : null;
-  const previewUsageText =
-    previewCpuPercent !== null || previewMemPercent !== null
-      ? `${previewCpuPercent !== null ? `CPU ${Math.round(previewCpuPercent)}%` : ''}${previewCpuPercent !== null && previewMemPercent !== null ? ' · ' : ''}${previewMemPercent !== null ? `MEM ${Math.round(previewMemPercent)}%` : ''}`
-      : '';
-  const previewDockerBadgeText = previewDockerEnabled
-    ? previewDockerInfo
-      ? (previewDockerRunning ? 'Docker: 运行中' : 'Docker: 已停止')
-      : (previewDockerContainer ? 'Docker: 未匹配' : 'Docker: 未配置')
-    : '';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,150 +144,146 @@ const ActionModal: React.FC<ActionModalProps> = ({ isOpen, onClose, onSubmit, ti
     onClose();
   };
 
+  const Switch = ({ checked, onChange, label }: { checked: boolean, onChange: (val: boolean) => void, label: string }) => (
+    <div className="flex items-center justify-between py-2.5">
+      <span className="text-sm font-bold text-[var(--text-secondary)]">{label}</span>
+      <button
+        type="button"
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${checked ? 'bg-theme shadow-[0_0_15px_rgba(var(--color-theme),0.5)]' : 'bg-black/20 dark:bg-white/10'}`}
+      >
+        <span
+          aria-hidden="true"
+          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${checked ? 'translate-x-5' : 'translate-x-0'}`}
+        />
+      </button>
+    </div>
+  );
+
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md animate-fade-in" onClick={onClose}>
+    <div className="fixed inset-0 z-[2500] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in" onClick={onClose}>
       <div
-        className="w-full max-w-md glass-panel rounded-3xl overflow-hidden animate-slide-up shadow-[0_20px_60px_rgba(0,0,0,0.5)] ring-1 ring-white/20 dark:ring-white/10"
+        className="w-full max-w-3xl glass-panel overflow-hidden animate-slide-up shadow-[0_30px_100px_rgba(0,0,0,0.6)] border border-white/20 dark:border-white/10"
+        style={{
+          borderRadius: effects.radius,
+          backdropFilter: effects.backdropFilter,
+          borderWidth: effects.borderWidth
+        }}
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-5 border-b border-white/10 dark:border-white/5 bg-white/20 dark:bg-black/20">
-          <h3 className="font-bold text-lg text-[var(--text-primary)] drop-shadow-sm">{title}</h3>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-white/20 dark:hover:bg-white/10 text-[var(--text-secondary)] transition-colors focus:outline-none">
-            <X className="w-5 h-5 drop-shadow-sm" />
+        {/* Header */}
+        <div className="flex items-center justify-between px-8 py-6 border-b border-white/10 bg-white/5">
+          <div className="flex flex-col">
+            <h3 className="font-bold text-xl text-[var(--text-primary)]">{title}</h3>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">配置您的应用访问与状态感知</p>
+          </div>
+          <button onClick={onClose} className="p-2.5 rounded-full hover:bg-white/10 text-[var(--text-secondary)] transition-all active:scale-90">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {fields.map(field => (
-            <div key={field.name}>
-              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                {field.label} {field.required && <span className="text-red-500">*</span>}
-              </label>
-              {field.type === 'checkbox' ? (
-                <div className="flex items-center gap-3 glass-input rounded-xl px-4 py-3 group cursor-pointer" onClick={() => setFormData({ ...formData, [field.name]: !Boolean(formData[field.name]) })}>
-                  <input
-                    type="checkbox"
+        <div className="flex flex-col md:flex-row">
+          {/* Left: Form Area */}
+          <form onSubmit={handleSubmit} className="flex-1 p-8 space-y-5 border-r border-white/5 max-h-[70vh] overflow-y-auto custom-scrollbar">
+            {fields.map(field => (
+              <div key={field.name} className="space-y-1.5">
+                {field.type !== 'checkbox' && (
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] px-1">
+                    {field.label} {field.required && <span className="text-red-500">*</span>}
+                  </label>
+                )}
+                {field.type === 'checkbox' ? (
+                  <Switch
                     checked={Boolean(formData[field.name])}
-                    onChange={(e) => setFormData({ ...formData, [field.name]: e.target.checked })}
-                    className={`h-5 w-5 rounded-md border-[var(--glass-border)] bg-[var(--glass-bg-base)] text-theme focus:ring-theme transition-all cursor-pointer`}
-                    onClick={(e) => e.stopPropagation()}
+                    onChange={(val) => setFormData({ ...formData, [field.name]: val })}
+                    label={field.label}
                   />
-                  <span className="text-sm font-medium text-[var(--text-secondary)]">{field.placeholder || '启用'}</span>
+                ) : field.type === 'select' ? (
+                  <select
+                    value={String(formData[field.name] ?? '')}
+                    onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
+                    required={field.required}
+                    className={`w-full px-4 py-3 bg-[var(--glass-bg-base)] border border-[var(--glass-border)] rounded-xl outline-none text-[var(--text-primary)] font-medium transition-all focus:ring-2 focus:ring-theme/30 focus:border-theme/50 appearance-none cursor-pointer`}
+                    autoFocus={field.name === fields[0].name}
+                  >
+                    {(field.options || []).map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <InputField
+                    type={field.type || 'text'}
+                    value={String(formData[field.name] ?? '')}
+                    onChange={(e) => {
+                      const nextVal = e.target.value;
+                      if (field.name === 'icon') setIconTouched(true);
+                      setFormData({ ...formData, [field.name]: nextVal });
+                    }}
+                    placeholder={field.placeholder}
+                    required={field.required}
+                    autoFocus={field.name === fields[0].name}
+                  />
+                )}
+              </div>
+            ))}
+          </form>
+
+          {/* Right: Preview Area */}
+          <div className="w-full md:w-[320px] bg-black/5 dark:bg-white/5 p-8 flex flex-col items-center justify-center gap-6">
+            <div className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] self-start">实时预览</div>
+
+            <div className="relative group/app w-40 h-40 rounded-3xl p-4 flex flex-col justify-center gap-2 items-center glass-panel border border-white/20 shadow-2xl transition-all duration-500 scale-110">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50 pointer-events-none" />
+
+              {previewDockerEnabled && (
+                <div className={`absolute top-4 right-4 z-20 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md border ${previewDockerRunning ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
+                  {previewDockerRunning ? 'ON' : 'OFF'}
                 </div>
-              ) : field.type === 'select' ? (
-                <select
-                  value={String(formData[field.name] ?? '')}
-                  onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                  required={field.required}
-                  className={`w-full px-4 py-3 bg-transparent glass-input rounded-xl focus:ring-2 focus:ring-theme/50 outline-none text-[var(--text-primary)] font-medium transition-all select-text cursor-pointer drop-shadow-sm [&>option]:bg-white dark:[&>option]:bg-black`}
-                  autoFocus={field.name === fields[0].name}
-                >
-                  {(field.options || []).map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type={field.type || 'text'}
-                  value={String(formData[field.name] ?? '')}
-                  onChange={(e) => {
-                    const nextVal = e.target.value;
-                    if (field.name === 'icon') setIconTouched(true);
-                    setFormData({ ...formData, [field.name]: nextVal });
-                  }}
-                  placeholder={field.placeholder}
-                  required={field.required}
-                  className={`w-full px-4 py-3 bg-transparent glass-input rounded-xl outline-none text-[var(--text-primary)] font-medium transition-all focus:shadow-[0_0_10px] focus:shadow-theme/50 select-text cursor-text`}
-                  autoFocus={field.name === fields[0].name}
-                />
               )}
-            </div>
-          ))}
 
-          {isDockerConfigModal && (
-            <div className="pt-1">
-              <div className="text-sm font-medium text-[var(--text-secondary)] mb-2">预览</div>
-              <div className="flex items-center gap-4">
-                <div
-                  className="relative rounded-2xl p-4 glass-panel w-36 h-36 flex flex-col items-center justify-center gap-3 overflow-hidden shadow-xl"
-                  title={previewUrl}
-                >
-                  {previewDockerEnabled && (
-                    <div
-                      className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-medium ${previewDockerInfo
-                        ? previewDockerRunning
-                          ? 'bg-emerald-500/20 text-emerald-200'
-                          : 'bg-amber-500/20 text-amber-200'
-                        : 'bg-white/10 text-[var(--text-secondary)]'
-                        }`}
-                      title={
-                        previewDockerInfo
-                          ? [String(previewDockerInfo.status || ''), previewUsageText].filter(Boolean).join(' | ')
-                          : previewDockerContainer
-                      }
-                    >
-                      {previewDockerBadgeText}
-                    </div>
-                  )}
+              <div className="w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-[1.1rem] bg-gradient-to-b from-[var(--glass-bg-hover)] to-transparent flex items-center justify-center border border-[var(--glass-border)] shadow-sm z-10 transition-transform duration-500">
+                <img
+                  src={previewIcon}
+                  alt={previewName}
+                  className="w-[60%] h-[60%] object-contain drop-shadow-sm"
+                  onError={(e) => { e.currentTarget.src = 'https://api.iconify.design/ph:app-window.svg'; }}
+                />
+              </div>
 
-                  {previewDockerEnabled && previewDockerShowControls && (
-                    <div className="absolute top-2 right-2 flex items-center gap-1.5">
-                      {previewDockerRunning ? (
-                        <div className="p-1.5 rounded-full bg-black/30 text-white opacity-70" title="停止">
-                          <Square className="w-3.5 h-3.5" />
-                        </div>
-                      ) : (
-                        <div className="p-1.5 rounded-full bg-black/30 text-white opacity-70" title="启动">
-                          <Play className="w-3.5 h-3.5" />
-                        </div>
-                      )}
-                      <div className="p-1.5 rounded-full bg-black/30 text-white opacity-70" title="重启">
-                        <RotateCw className="w-3.5 h-3.5" />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="w-14 h-14 rounded-xl bg-[var(--glass-bg-base)] border border-[var(--glass-border)] flex items-center justify-center shadow-inner overflow-hidden">
-                    <img
-                      src={previewIcon}
-                      alt={previewName}
-                      className="w-10 h-10 object-contain"
-                      onError={(e) => { e.currentTarget.src = `https://api.iconify.design/ph:app-window.svg?color=%23${themeColor === 'slate' ? '94a3b8' : 'a855f7'}`; }}
-                    />
-                  </div>
-                  <div className="text-xs font-medium text-[var(--text-primary)] text-center line-clamp-2 w-full px-1">
-                    {previewName}
-                  </div>
-                </div>
-
-                <div className="text-xs text-[var(--text-secondary)] leading-5">
-                  <div>URL: {previewUrl}</div>
-                  {previewDockerEnabled && <div>容器: {previewDockerContainer || '未填写'}</div>}
-                  {previewDockerEnabled && previewDockerInfo && previewUsageText && <div>{previewUsageText}</div>}
-                </div>
+              <div className="flex flex-col z-10 items-center w-full">
+                <span className="font-black text-[var(--text-primary)] tracking-tight text-[12px] md:text-[13px] text-center truncate w-full px-1">
+                  {previewName}
+                </span>
               </div>
             </div>
-          )}
 
-          <div className="pt-2 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2.5 text-sm font-bold text-[var(--text-secondary)] bg-[var(--glass-bg-base)] hover:bg-[var(--glass-bg-hover)] rounded-xl transition-all outline-none border border-[var(--glass-border)]"
-            >
-              取消
-            </button>
-            <button
-              type="submit"
-              className={`relative px-5 py-2.5 text-sm font-bold text-white bg-theme hover:shadow-[0_0_20px] hover:shadow-theme/50 rounded-xl shadow-lg transition-all focus:scale-[0.98] outline-none overflow-hidden group`}
-            >
-              <div className="absolute inset-0 bg-white/20 dark:bg-black/20 mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity" />
-              <span className="relative z-10">确认</span>
-            </button>
+            <div className="w-full space-y-3 pt-4">
+              <div className="text-[10px] space-y-1 opacity-70">
+                <p className="font-bold flex justify-between"><span>状态：</span> <span className={previewDockerRunning ? 'text-emerald-400' : 'text-[var(--text-muted)]'}>{previewDockerEnabled ? (previewDockerRunning ? '监听中' : '容器停止') : '常规链接'}</span></p>
+                <p className="font-bold truncate" title={previewUrl}><span>链接：</span> {previewUrl}</p>
+              </div>
+            </div>
           </div>
-        </form>
+        </div>
+
+        {/* Footer */}
+        <div className="px-8 py-6 bg-white/5 border-t border-white/10 flex justify-end gap-3">
+          <Button
+            variant="ghost"
+            onClick={onClose}
+          >
+            取消
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleSubmit}
+            leftIcon={<Save className="w-4 h-4" />}
+          >
+            确认提交
+          </Button>
+        </div>
       </div>
     </div>
   );

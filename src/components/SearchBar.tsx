@@ -64,6 +64,22 @@ const SearchBar: React.FC<SearchBarProps> = ({ onPlayContext }) => {
         }));
         setMusicResults(results);
         setHasSearched(true);
+
+        // Progressively load covers in background
+        results.forEach((track, idx) => {
+          const picId = track.meta?.pic_id;
+          if (!picId) return;
+          fetch(`${MUSIC_API_URL}?types=pic&id=${picId}&source=${searchSource}&size=100`)
+            .then(r => r.json())
+            .then(picData => {
+              if (picData?.url) {
+                setMusicResults(prev => prev.map((t, i) =>
+                  i === idx ? { ...t, cover: picData.url.replace(/^http:/, 'https:') } : t
+                ));
+              }
+            })
+            .catch(() => { });
+        });
       }
     } catch (e) {
       setHasSearched(true);

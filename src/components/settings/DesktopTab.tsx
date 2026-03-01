@@ -128,12 +128,24 @@ const DesktopTab: React.FC<DesktopTabProps> = ({ config, updateConfig, t, themeC
   const handleDragMove = (clientX: number, clientY: number) => {
     if (!isDragging || !previewRef.current || !dragStartRef.current || !dragOriginRef.current) return;
     const rect = previewRef.current.getBoundingClientRect();
-    const rx = (viewportSize.w || 1920) / rect.width;
-    const ry = (viewportSize.h || 1080) / rect.height;
+    const rx = (viewportSize.w || 1920) / (rect.width || 1);
+    const ry = (viewportSize.h || 1080) / (rect.height || 1);
     const dx = (clientX - dragStartRef.current.x) * rx;
     const dy = (clientY - dragStartRef.current.y) * ry;
-    const nextX = dragOriginRef.current.x + dx;
-    const nextY = dragOriginRef.current.y + dy;
+    let nextX = dragOriginRef.current.x + dx;
+    let nextY = dragOriginRef.current.y + dy;
+
+    const scale = currentPosition.scale || 1.05;
+    if (scale > 1) {
+      const maxX = (viewportSize.w || window.innerWidth) * (scale - 1) / (2 * scale);
+      const maxY = (viewportSize.h || window.innerHeight) * (scale - 1) / (2 * scale);
+      nextX = Math.max(-maxX, Math.min(maxX, nextX));
+      nextY = Math.max(-maxY, Math.min(maxY, nextY));
+    } else {
+      nextX = 0;
+      nextY = 0;
+    }
+
     liveOffsetRef.current = { x: nextX, y: nextY };
     setLiveOffset({ x: nextX, y: nextY });
   };
@@ -251,21 +263,29 @@ const DesktopTab: React.FC<DesktopTabProps> = ({ config, updateConfig, t, themeC
 
       <BentoCard title="壁纸预览" icon={ImageIcon} className="md:col-span-2">
         <div className="relative aspect-video rounded-3xl overflow-hidden border-2 border-white/10 bg-black group/preview">
-          <div ref={setPreviewRef} className={`w-full h-full relative cursor-grab active:cursor-grabbing transition-shadow duration-500 ${isDragging ? 'shadow-[inset_0_0_100px_rgba(0,0,0,0.5)]' : ''}`}
+          
+          {/* Layer 0: Preview Deep Base */}
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900" />
+          
+          {/* Layer 1: Preview Ambient Glow */}
+          <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] rounded-full bg-[var(--color-theme)] opacity-20 blur-[60px]" />
+          <div className="absolute bottom-[-20%] right-[-20%] w-[80%] h-[80%] rounded-full bg-[var(--color-theme-secondary)] opacity-10 blur-[50px]" />
+
+          <div ref={setPreviewRef} className={`w-full h-full relative cursor-grab active:cursor-grabbing transition-shadow duration-500 z-10 ${isDragging ? 'shadow-[inset_0_0_100px_rgba(0,0,0,0.5)]' : ''}`}
             onMouseDown={e => handleDragStart(e, e.clientX, e.clientY)}
             onTouchStart={e => handleDragStart(e, e.touches[0].clientX, e.touches[0].clientY)}>
             {currentImg || currentVid ? (
               <>
                 {currentType === 'video' ? (
-                  <video src={currentVid ?? undefined} autoPlay muted loop className={`absolute inset-0 w-full h-full object-cover pointer-events-none ${isDragging ? '' : 'transition-transform duration-500'}`} style={{ objectFit: 'cover', objectPosition: `calc(50% + ${previewX}px) calc(50% + ${previewY}px)`, transform: `scale(${currentPosition.scale})` }} />
+                  <video src={currentVid ?? undefined} autoPlay muted loop className={`absolute inset-0 w-full h-full object-cover pointer-events-none ${isDragging ? '' : 'transition-transform duration-500'}`} style={{ objectFit: 'cover', objectPosition: `calc(50% + ${previewX}px) calc(50% + ${previewY}px)`, transform: `scale(${currentPosition.scale})`, opacity: Math.max(0.1, config.bgOpacity ?? 1) }} />
                 ) : (
-                  <div className={`absolute inset-0 bg-no-repeat bg-cover pointer-events-none ${isDragging ? '' : 'transition-transform duration-500'}`} style={{ backgroundImage: `url(${currentImg})`, backgroundPosition: `calc(50% + ${previewX}px) calc(50% + ${previewY}px)`, transform: `scale(${currentPosition.scale})` }} />
+                  <div className={`absolute inset-0 bg-no-repeat bg-cover pointer-events-none ${isDragging ? '' : 'transition-transform duration-500'}`} style={{ backgroundImage: `url(${currentImg})`, backgroundPosition: `calc(50% + ${previewX}px) calc(50% + ${previewY}px)`, transform: `scale(${currentPosition.scale})`, opacity: Math.max(0.1, config.bgOpacity ?? 1) }} />
                 )}
                 <div className="absolute inset-0 pointer-events-none" style={{ backdropFilter: `blur(${currentBlur}px)` }} />
               </>
             ) : <div className="absolute inset-0 flex items-center justify-center text-[var(--text-muted)] text-[11px] font-bold uppercase tracking-widest">待配置</div>}
           </div>
-          <div className="absolute top-4 right-4 flex p-1 bg-black/40 backdrop-blur-md rounded-xl border border-white/10 z-10">
+          <div className="absolute top-4 right-4 flex p-1 bg-black/40 backdrop-blur-md rounded-xl border border-white/10 z-20">
             {[{ id: 'desktop', icon: Monitor }, { id: 'mobile', icon: Smartphone }].map(tab => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`p-2 rounded-lg transition-all ${activeTab === tab.id ? 'bg-theme text-white shadow-lg' : 'text-white/40 hover:text-white'}`}>
                 <tab.icon className="w-4 h-4" />
@@ -280,7 +300,21 @@ const DesktopTab: React.FC<DesktopTabProps> = ({ config, updateConfig, t, themeC
                 <span>壁纸缩放</span>
                 <span className="font-mono">{Math.round((currentPosition.scale || 1) * 100)}%</span>
               </div>
-              <input type="range" min={1.05} max={3.0} step="0.05" value={currentPosition.scale || 1.05} onChange={e => updateConfig((p: any) => ({ ...p, [positionKey]: { ...((p[positionKey] as any) || {}), scale: Number(e.target.value) } }))} className="w-full h-1.5 rounded-full accent-theme appearance-none bg-white/10 cursor-pointer" />
+              <input type="range" min={1.05} max={3.0} step="0.05" value={currentPosition.scale || 1.05} onChange={e => {
+                const newScale = Number(e.target.value);
+                let nextX = currentPosition.x || 0;
+                let nextY = currentPosition.y || 0;
+                if (newScale > 1) {
+                  const maxX = (viewportSize.w || window.innerWidth) * (newScale - 1) / (2 * newScale);
+                  const maxY = (viewportSize.h || window.innerHeight) * (newScale - 1) / (2 * newScale);
+                  nextX = Math.max(-maxX, Math.min(maxX, nextX));
+                  nextY = Math.max(-maxY, Math.min(maxY, nextY));
+                } else {
+                  nextX = 0;
+                  nextY = 0;
+                }
+                updateConfig((p: any) => ({ ...p, [positionKey]: { ...((p[positionKey] as any) || {}), scale: newScale, x: nextX, y: nextY } }));
+              }} className="w-full h-1.5 rounded-full accent-theme appearance-none bg-white/10 cursor-pointer" />
             </div>
             <div className="space-y-3">
               <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-theme">
@@ -292,10 +326,10 @@ const DesktopTab: React.FC<DesktopTabProps> = ({ config, updateConfig, t, themeC
           </div>
           <div className="space-y-3">
             <div className="flex justify-between text-[11px] font-black uppercase tracking-widest text-theme">
-              <span>壁纸遮罩透明度</span>
-              <span className="font-mono">{Math.round((config.bgOpacity ?? 0.5) * 100)}%</span>
-            </div>
-            <input type="range" min={0} max={1} step={0.01} value={config.bgOpacity ?? 0.5} onChange={e => updateConfig({ ...config, bgOpacity: Number(e.target.value) })} className="w-full h-1.5 rounded-full accent-theme appearance-none bg-white/10 cursor-pointer" />
+                <span>壁纸不透明度</span>
+                <span className="font-mono">{Math.round((config.bgOpacity ?? 1) * 100)}%</span>
+              </div>
+              <input type="range" min={0.1} max={1} step={0.01} value={config.bgOpacity ?? 1} onChange={e => updateConfig({ ...config, bgOpacity: Number(e.target.value) })} className="w-full h-1.5 rounded-full accent-theme appearance-none bg-white/10 cursor-pointer" />
           </div>
         </div>
       </BentoCard>

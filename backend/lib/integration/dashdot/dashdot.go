@@ -1,16 +1,16 @@
 package dashdot
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"matrix-panel/lib/integration"
 	"net/http"
-	"time"
 )
 
 // DashdotIntegration represents a Dashdot system monitoring integration
 type DashdotIntegration struct {
-	BaseURL string
-	client  *http.Client
+	*integration.BaseIntegration
 }
 
 // DashdotStats represents system statistics from Dashdot
@@ -51,19 +51,22 @@ type DashdotStats struct {
 	Uptime int64 `json:"uptime"` // Seconds
 }
 
-// NewDashdotIntegration creates a new Dashdot integration
-func NewDashdotIntegration(baseURL string) *DashdotIntegration {
+// New 创建 Dashdot 集成实例
+func New(id, name, url string, secrets map[string]string) *DashdotIntegration {
 	return &DashdotIntegration{
-		BaseURL: baseURL,
-		client: &http.Client{
-			Timeout: 10 * time.Second,
-		},
+		BaseIntegration: integration.NewBaseIntegration(id, name, "dashdot", url, secrets),
 	}
 }
 
 // TestConnection tests the connection to Dashdot
-func (d *DashdotIntegration) TestConnection() error {
-	resp, err := d.client.Get(fmt.Sprintf("%s/api/info", d.BaseURL))
+func (d *DashdotIntegration) TestConnection(ctx context.Context) error {
+	url := d.BuildURL("/api/info")
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := d.Client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to connect to Dashdot: %w", err)
 	}
@@ -77,8 +80,14 @@ func (d *DashdotIntegration) TestConnection() error {
 }
 
 // GetStats retrieves system statistics from Dashdot
-func (d *DashdotIntegration) GetStats() (*DashdotStats, error) {
-	resp, err := d.client.Get(fmt.Sprintf("%s/api/info", d.BaseURL))
+func (d *DashdotIntegration) GetStats(ctx context.Context) (*DashdotStats, error) {
+	url := d.BuildURL("/api/info")
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := d.Client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stats from Dashdot: %w", err)
 	}
@@ -94,18 +103,4 @@ func (d *DashdotIntegration) GetStats() (*DashdotStats, error) {
 	}
 
 	return &stats, nil
-}
-
-// GetLoad retrieves current system load (simplified)
-func (d *DashdotIntegration) GetLoad() (map[string]interface{}, error) {
-	stats, err := d.GetStats()
-	if err != nil {
-		return nil, err
-	}
-
-	return map[string]interface{}{
-		"cpuLoad":    stats.CPU.Load,
-		"ramPercent": stats.RAM.Percent,
-		"uptime":     stats.Uptime,
-	}, nil
 }

@@ -1,0 +1,103 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>00_Foundations</title>
+  <style>
+    :root {
+      --bg: #070d1a;
+      --panel: rgba(20,31,58,.58);
+      --line: rgba(167,195,236,.22);
+      --text: #eaf2ff;
+      --muted: #9eb2d4;
+      --accent: #7fd8ff;
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: "PingFang SC","Microsoft YaHei",sans-serif; background: radial-gradient(1400px 700px at 70% 20%, #1a2b56 0%, #070d1a 55%, #04070f 100%); color:var(--text); }
+    .page { width: 1536px; min-height: 864px; margin: 0 auto; padding: 28px; }
+    .card { border:1px solid var(--line); background:var(--panel); border-radius:24px; backdrop-filter: blur(12px); }
+    h1 { margin:0 0 8px; font-size:34px; }
+    .muted { color:var(--muted); }
+    .grid { display:grid; gap:18px; }
+    .g2 { grid-template-columns:1fr 1fr; }
+    .token { padding:16px 18px; }
+    .swatches { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin-top:10px; }
+    .sw { height:68px; border-radius:14px; border:1px solid var(--line); display:flex; align-items:flex-end; padding:8px; font-size:12px; color:#d8e8ff; }
+    .layout { padding:16px; }
+    .frame { width:100%; border:1px dashed rgba(130,180,255,.38); border-radius:18px; padding:14px; margin-top:12px; }
+    .frame-title { font-size:14px; color:var(--accent); }
+    .zones { display:grid; gap:8px; margin-top:10px; height:300px; }
+    .z1 { grid-template-rows:44fr 24fr 32fr; }
+    .zone { border-radius:12px; border:1px solid rgba(140,180,255,.35); background:rgba(15,30,57,.4); display:flex; align-items:center; justify-content:center; font-size:13px; color:#c9dcff; }
+    .note { padding:16px 18px; line-height:1.6; font-size:14px; }
+    ul { margin:8px 0 0 18px; }
+  </style>
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>`n</head>
+<body>
+  <main class="page">
+    <h1>00_Foundations</h1>
+    <div class="muted">Weather Fullscreen IA · 中文优先 · 16:9 无滚动 · 玻璃拟态线框</div>
+
+    <section class="grid g2" style="margin-top:18px;">
+      <article class="card token">
+        <h3 style="margin:0 0 8px;">颜色与材质 Tokens</h3>
+        <div class="swatches">
+          <div class="sw" style="background:#070d1a;">BG / #070D1A</div>
+          <div class="sw" style="background:#12203f;">Deep / #12203F</div>
+          <div class="sw" style="background:#1d3a6b;">Glass Mid</div>
+          <div class="sw" style="background:rgba(20,31,58,.58);">Panel / 58%</div>
+          <div class="sw" style="background:rgba(167,195,236,.22);">Border / 22%</div>
+          <div class="sw" style="background:#7fd8ff; color:#05203a;">Accent</div>
+        </div>
+      </article>
+
+      <article class="card token">
+        <h3 style="margin:0 0 8px;">字体与间距</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:14px; line-height:1.7;">
+          <div>
+            Display 温度: 96/84
+            <br/>H1 城市名: 44
+            <br/>H2 区块标题: 22
+            <br/>Body 数值: 16
+            <br/>Meta 标签: 11-12
+          </div>
+          <div>
+            外边距: 32
+            <br/>区块间距: 16
+            <br/>卡片圆角: 22
+            <br/>卡片内边距: 14-18
+            <br/>边框: 1px 低对比
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="grid g2" style="margin-top:18px;">
+      <article class="card layout">
+        <h3 style="margin:0;">布局预算 · 1536×864（主稿）</h3>
+        <div class="frame">
+          <div class="frame-title">头部后可用区三段固定比例：44% / 24% / 32%</div>
+          <div class="zones z1">
+            <div class="zone">顶部总览区（城市温度 + 实时指标 + AQI）</div>
+            <div class="zone">中部短期变化区（24小时 + 降水趋势）</div>
+            <div class="zone">底部中期决策区（7日趋势 + 生活指数）</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card note">
+        <h3 style="margin:0 0 8px;">短高度安全策略 · 1536×768</h3>
+        <ul>
+          <li>保持三段结构不变，优先收缩卡片内边距和行高</li>
+          <li>24小时默认展示 10 卡，超宽展示 12 卡</li>
+          <li>7日趋势保持完整，图标缩至 14px，温带条缩至 6px</li>
+          <li>中文长标签不截断核心语义（如“未来2小时降水”）</li>
+          <li>不允许出现纵向滚动</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
+

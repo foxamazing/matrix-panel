@@ -31,7 +31,10 @@ require (
 	gorm.io/gorm v1.25.7
 )
 
-require github.com/arran4/golang-ical v0.3.2
+require (
+	github.com/arran4/golang-ical v0.3.2
+	github.com/mmcdole/gofeed v1.3.0
+)
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
@@ -67,7 +70,8 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mattn/go-sqlite3 v1.14.18 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
+	github.com/mmcdole/goxpp v1.1.1-0.20240225020742-a0c311522b23 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect

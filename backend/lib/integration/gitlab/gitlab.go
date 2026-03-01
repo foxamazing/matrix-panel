@@ -1,17 +1,27 @@
 package gitlab
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"matrix-panel/lib/integration"
 	"net/http"
 	"time"
 )
 
 // GitLabIntegration represents a GitLab integration
 type GitLabIntegration struct {
-	BaseURL string
-	Token   string
-	client  *http.Client
+	*integration.BaseIntegration
+}
+
+// New 创建 GitLab 集成实例
+func New(id, name, url string, secrets map[string]string) *GitLabIntegration {
+	if url == "" {
+		url = "https://gitlab.com"
+	}
+	return &GitLabIntegration{
+		BaseIntegration: integration.NewBaseIntegration(id, name, "gitlab", url, secrets),
+	}
 }
 
 // Project represents a GitLab project
@@ -75,36 +85,28 @@ type User struct {
 	Avatar   string `json:"avatar_url"`
 }
 
-// NewGitLabIntegration creates a new GitLab integration
-func NewGitLabIntegration(baseURL, token string) *GitLabIntegration {
-	if baseURL == "" {
-		baseURL = "https://gitlab.com"
-	}
-	return &GitLabIntegration{
-		BaseURL: baseURL,
-		Token:   token,
-		client: &http.Client{
-			Timeout: 15 * time.Second,
-		},
-	}
-}
-
 // TestConnection tests the GitLab connection
-func (g *GitLabIntegration) TestConnection() error {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v4/user", g.BaseURL), nil)
+func (g *GitLabIntegration) TestConnection(ctx context.Context) error {
+	token := g.GetSecret("token")
+	if token == "" {
+		return fmt.Errorf("GitLab Token 未配置")
+	}
+
+	url := g.BuildURL("/api/v4/user")
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("PRIVATE-TOKEN", g.Token)
+	req.Header.Set("PRIVATE-TOKEN", token)
 
-	resp, err := g.client.Do(req)
+	resp, err := g.Client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to connect to GitLab: %w", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == 401 {
+	if resp.StatusCode == http.StatusUnauthorized {
 		return fmt.Errorf("authentication failed: invalid token")
 	}
 
@@ -116,18 +118,18 @@ func (g *GitLabIntegration) TestConnection() error {
 }
 
 // GetProjects retrieves user's projects
-func (g *GitLabIntegration) GetProjects(limit int) ([]Project, error) {
-	url := fmt.Sprintf("%s/api/v4/projects?membership=true&per_page=%d&order_by=last_activity_at",
-		g.BaseURL, limit)
+func (g *GitLabIntegration) GetProjects(ctx context.Context, limit int) ([]Project, error) {
+	token := g.GetSecret("token")
+	url := g.BuildURL(fmt.Sprintf("/api/v4/projects?membership=true&per_page=%d&order_by=last_activity_at", limit))
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("PRIVATE-TOKEN", g.Token)
+	req.Header.Set("PRIVATE-TOKEN", token)
 
-	resp, err := g.client.Do(req)
+	resp, err := g.Client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get projects: %w", err)
 	}
@@ -146,18 +148,18 @@ func (g *GitLabIntegration) GetProjects(limit int) ([]Project, error) {
 }
 
 // GetPipelines retrieves recent pipelines for a project
-func (g *GitLabIntegration) GetPipelines(projectID int, limit int) ([]Pipeline, error) {
-	url := fmt.Sprintf("%s/api/v4/projects/%d/pipelines?per_page=%d",
-		g.BaseURL, projectID, limit)
+func (g *GitLabIntegration) GetPipelines(ctx context.Context, projectID int, limit int) ([]Pipeline, error) {
+	token := g.GetSecret("token")
+	url := g.BuildURL(fmt.Sprintf("/api/v4/projects/%d/pipelines?per_page=%d", projectID, limit))
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("PRIVATE-TOKEN", g.Token)
+	req.Header.Set("PRIVATE-TOKEN", token)
 
-	resp, err := g.client.Do(req)
+	resp, err := g.Client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pipelines: %w", err)
 	}
@@ -173,64 +175,4 @@ func (g *GitLabIntegration) GetPipelines(projectID int, limit int) ([]Pipeline, 
 	}
 
 	return pipelines, nil
-}
-
-// GetIssues retrieves open issues for a project
-func (g *GitLabIntegration) GetIssues(projectID int, limit int) ([]Issue, error) {
-	url := fmt.Sprintf("%s/api/v4/projects/%d/issues?state=opened&per_page=%d",
-		g.BaseURL, projectID, limit)
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("PRIVATE-TOKEN", g.Token)
-
-	resp, err := g.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get issues: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GitLab returned status code %d", resp.StatusCode)
-	}
-
-	var issues []Issue
-	if err := json.NewDecoder(resp.Body).Decode(&issues); err != nil {
-		return nil, fmt.Errorf("failed to decode issues: %w", err)
-	}
-
-	return issues, nil
-}
-
-// GetMergeRequests retrieves open merge requests for a project
-func (g *GitLabIntegration) GetMergeRequests(projectID int, limit int) ([]MergeRequest, error) {
-	url := fmt.Sprintf("%s/api/v4/projects/%d/merge_requests?state=opened&per_page=%d",
-		g.BaseURL, projectID, limit)
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("PRIVATE-TOKEN", g.Token)
-
-	resp, err := g.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get merge requests: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GitLab returned status code %d", resp.StatusCode)
-	}
-
-	var mrs []MergeRequest
-	if err := json.NewDecoder(resp.Body).Decode(&mrs); err != nil {
-		return nil, fmt.Errorf("failed to decode merge requests: %w", err)
-	}
-
-	return mrs, nil
 }

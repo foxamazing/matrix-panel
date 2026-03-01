@@ -1,109 +1,117 @@
 package integration
 
 import (
+	"context"
+	"fmt"
+	"matrix-panel/db"
 	"matrix-panel/lib/integration/gitlab"
+	"matrix-panel/models"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-// GitLabProjectsHandler handles GitLab projects requests
-func GitLabProjectsHandler(c *gin.Context) {
+// GetGitLabProjects 获取 GitLab 项目列表
+func GetGitLabProjects(c *gin.Context) {
 	var req struct {
-		BaseURL string `json:"baseUrl"`
-		Token   string `json:"token" binding:"required"`
-		Limit   int    `json:"limit"`
+		IntegrationID string `json:"integrationId" binding:"required"`
+		Limit         int    `json:"limit"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Invalid request: " + err.Error(),
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "参数错误: " + err.Error()})
 		return
 	}
 
-	if req.Limit == 0 {
+	if req.Limit <= 0 {
 		req.Limit = 10
 	}
 
-	client := gitlab.NewGitLabIntegration(req.BaseURL, req.Token)
-	projects, err := client.GetProjects(req.Limit)
+	integration, err := getGitLabIntegration(req.IntegrationID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Failed to get projects: " + err.Error(),
-		})
+		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": "集成不存在"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success":  true,
-		"projects": projects,
-	})
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	projects, err := integration.GetProjects(ctx, req.Limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": projects})
 }
 
-// GitLabPipelinesHandler handles GitLab pipelines requests
-func GitLabPipelinesHandler(c *gin.Context) {
+// GetGitLabPipelines 获取 GitLab 流水线列表
+func GetGitLabPipelines(c *gin.Context) {
 	var req struct {
-		BaseURL   string `json:"baseUrl"`
-		Token     string `json:"token" binding:"required"`
-		ProjectID int    `json:"projectId" binding:"required"`
-		Limit     int    `json:"limit"`
+		IntegrationID string `json:"integrationId" binding:"required"`
+		ProjectID     int    `json:"projectId" binding:"required"`
+		Limit         int    `json:"limit"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Invalid request: " + err.Error(),
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "参数错误: " + err.Error()})
 		return
 	}
 
-	if req.Limit == 0 {
-		req.Limit = 10
+	if req.Limit <= 0 {
+		req.Limit = 5
 	}
 
-	client := gitlab.NewGitLabIntegration(req.BaseURL, req.Token)
-	pipelines, err := client.GetPipelines(req.ProjectID, req.Limit)
+	integration, err := getGitLabIntegration(req.IntegrationID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Failed to get pipelines: " + err.Error(),
-		})
+		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": "集成不存在"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success":   true,
-		"pipelines": pipelines,
-	})
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	pipelines, err := integration.GetPipelines(ctx, req.ProjectID, req.Limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": pipelines})
 }
 
-// GitLabTestConnectionHandler tests GitLab connection
+// GitLabTestConnectionHandler 测试 GitLab 连接
 func GitLabTestConnectionHandler(c *gin.Context) {
-	baseURL := c.Query("baseUrl")
-	token := c.Query("token")
+	var req struct {
+		URL     string            `json:"url" binding:"required"`
+		Secrets map[string]string `json:"secrets"`
+	}
 
-	if token == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "token parameter required",
-		})
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": err.Error()})
 		return
 	}
 
-	client := gitlab.NewGitLabIntegration(baseURL, token)
-	if err := client.TestConnection(); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"error":   err.Error(),
-		})
+	g := gitlab.New("", "Test", req.URL, req.Secrets)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := g.TestConnection(ctx); err != nil {
+		c.JSON(http.StatusOK, gin.H{"success": false, "error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "Connection successful",
-	})
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "连接成功"})
+}
+
+func getGitLabIntegration(id string) (*gitlab.GitLabIntegration, error) {
+	var integration models.Integration
+	if err := db.DB.First(&integration, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	integration.AfterFind()
+
+	return gitlab.New(fmt.Sprintf("%d", integration.ID), integration.Name, integration.URL, integration.SecretMap), nil
 }

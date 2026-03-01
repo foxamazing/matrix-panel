@@ -4,13 +4,16 @@ import (
 	"matrix-panel/api/api_v1/common/apiData/systemApiStructs"
 	"matrix-panel/api/api_v1/common/apiReturn"
 	"matrix-panel/api/api_v1/common/base"
+	"matrix-panel/db"
 	"matrix-panel/global"
+	"matrix-panel/initialize/database"
 	"matrix-panel/lib/cmn"
 	"matrix-panel/models"
 	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"gorm.io/gorm"
 )
 
 type UserApi struct{}
@@ -140,32 +143,90 @@ func (a *UserApi) GetReferralCode(c *gin.Context) {
 }
 
 func (a *UserApi) ResetAll(c *gin.Context) {
+	// 1. 物理删除磁盘物理文件 (上传的图标、背景等)
 	files := []models.File{}
-	if err := global.Db.Find(&files).Error; err != nil {
-		apiReturn.ErrorDatabase(c, err.Error())
-		return
-	}
-
-	for _, v := range files {
-		if v.Src != "" {
-			_ = os.Remove(v.Src)
+	if err := global.Db.Find(&files).Error; err == nil {
+		for _, v := range files {
+			if v.Src != "" {
+				_ = os.Remove(v.Src)
+			}
 		}
 	}
 
-	if err := global.Db.Where("1 = 1").Delete(&models.File{}).Error; err != nil {
-		apiReturn.ErrorDatabase(c, err.Error())
-		return
+	// 2. 依次物理清理所有业务数据表 (双线作战：global.Db + db.DB)
+	// 我们遍历两个可能的数据库连接，以防系统处于双库并行状态
+	dbs := []*gorm.DB{global.Db}
+	if db.DB != nil {
+		dbs = append(dbs, db.DB)
 	}
 
-	if err := global.Db.Where("1 = 1").Delete(&models.ModuleConfig{}).Error; err != nil {
-		apiReturn.ErrorDatabase(c, err.Error())
-		return
+	for _, d := range dbs {
+		if d == nil {
+			continue
+		}
+
+		err := d.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Unscoped().Where("1 = 1").Delete(&models.WidgetInstance{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Unscoped().Where("1 = 1").Delete(&models.Board{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Unscoped().Where("1 = 1").Delete(&models.ItemIcon{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Unscoped().Where("1 = 1").Delete(&models.ItemIconGroup{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Unscoped().Where("1 = 1").Delete(&models.Integration{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Unscoped().Where("1 = 1").Delete(&models.Notice{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Unscoped().Where("1 = 1").Delete(&models.UserConfig{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Unscoped().Where("1 = 1").Delete(&models.ModuleConfig{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Unscoped().Where("1 = 1").Delete(&models.SystemSetting{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Unscoped().Where("1 = 1").Delete(&models.File{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Unscoped().Where("1 = 1").Delete(&models.Invite{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Unscoped().Where("1 = 1").Delete(&models.User{}).Error; err != nil {
+				return err
+			}
+			return nil
+		})
+		if err != nil {
+			apiReturn.ErrorDatabase(c, err.Error())
+			return
+		}
 	}
 
-	if err := global.Db.Where("1 = 1").Delete(&models.UserConfig{}).Error; err != nil {
-		apiReturn.ErrorDatabase(c, err.Error())
-		return
+	// 3. 强制清空内存中所有已知的缓存池
+	if global.UserToken != nil {
+		global.UserToken.Flush()
 	}
+	if global.CUserToken != nil {
+		global.CUserToken.Flush()
+	}
+	if global.SystemSetting != nil && global.SystemSetting.Cache != nil {
+		global.SystemSetting.Cache.Flush()
+	}
+	if global.SystemMonitor != nil {
+		global.SystemMonitor.Flush()
+	}
+
+	// 4. 重建初始管理员账号 (admin / admin)
+	// 在清理完成后立即重新触发初始化
+	database.NotFoundAndCreateUser(global.Db)
 
 	apiReturn.Success(c)
 }

@@ -38,4 +38,5 @@ var (
 	SystemSetting       *systemSetting.SystemSettingCache
 	SystemMonitor       cache.Cacher[interface{}]
 	RateLimit           *RateLimiter
+	WSHub               interface{} // 存储 *websocket.Hub，避免循环引用
 )

@@ -29,6 +29,10 @@ func Init(routerGroup *gin.RouterGroup) {
 	// Widget数据 API
 	widgetData := api_v1.Group("/integrations")
 	{
+		// RSS 代理
+		rssApi := widget.RSSApi{}
+		widgetData.POST("/rss", rssApi.GetFeeds)
+
 		// P1已实现的API
 		widgetData.POST("/media-server/sessions", widget.GetMediaServerSessions)
 		widgetData.POST("/sonarr/calendar", widget.GetSonarrCalendar)

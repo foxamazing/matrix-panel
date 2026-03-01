@@ -74,6 +74,12 @@ export const TRANSLATIONS = {
         clockSettings: "时钟显示",
         showDate: "显示日期",
         showSeconds: "显示秒钟",
+        uiStyle: "主题风格",
+        styleGlass: "玻璃拟物",
+        styleMinimal: "极简纯粹",
+        styleBrutal: "粗野块面",
+        styleNeumorph: "立体浮雕",
+        styleCyber: "赛博霓虹",
         cardOpacity: "卡片透明度",
         reset: "重置"
       },
@@ -216,6 +222,12 @@ export const TRANSLATIONS = {
         clockSettings: "Clock Settings",
         showDate: "Show Date",
         showSeconds: "Show Seconds",
+        uiStyle: "UI Style",
+        styleGlass: "Glassmorphism",
+        styleMinimal: "Minimalist",
+        styleBrutal: "Brutalism",
+        styleNeumorph: "Neumorphic",
+        styleCyber: "Cyberpunk",
         cardOpacity: "Card Opacity",
         reset: "Reset"
       },
@@ -354,6 +366,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   showDate: true,
   showSeconds: false,
   customFont: undefined,
+  uiStyle: 'glass',
   themeColor: 'zinc',
   bgType: 'image',
   bgImage: null,
@@ -381,15 +394,6 @@ export const DEFAULT_CONFIG: AppConfig = {
         id: 'default-0',
         name: '愿戴荣光坠入天渊',
         artist: '', // 自动搜索
-        url: '', // 自动获取
-        cover: '', // 自动获取
-        source: 'netease',
-        meta: {}
-      },
-      {
-        id: 'default-1',
-        name: '起风了',
-        artist: '买辣椒也用券',
         url: '', // 自动获取
         cover: '', // 自动获取
         source: 'netease',

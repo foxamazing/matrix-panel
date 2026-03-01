@@ -1,0 +1,135 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01_Wireframe_Desktop_1536x864</title>
+  <style>
+    :root{--bg:#070d1a;--glass:rgba(15,28,56,.58);--line:rgba(167,195,236,.24);--txt:#eef5ff;--muted:#9ab0d4;--a:#77d8ff}
+    *{box-sizing:border-box} body{margin:0;background:radial-gradient(1300px 700px at 72% 20%,#223a70 0%,#091126 56%,#050910 100%);font-family:"PingFang SC","Microsoft YaHei",sans-serif;color:var(--txt)}
+    .page{width:1536px;min-height:864px;margin:0 auto;padding:20px}
+    .board{height:824px;border:1px solid var(--line);border-radius:30px;background:linear-gradient(140deg,rgba(19,35,68,.78),rgba(8,16,34,.8));backdrop-filter:blur(16px);overflow:hidden}
+    .head{height:86px;border-bottom:1px solid rgba(167,195,236,.18);display:flex;align-items:center;justify-content:space-between;padding:0 28px}
+    .title{font-size:42px;font-weight:800;line-height:1}.sub{font-size:12px;color:var(--muted);margin-top:6px}
+    .btns{display:flex;gap:10px}.btn{height:36px;padding:0 14px;border-radius:18px;border:1px solid rgba(167,195,236,.24);background:rgba(255,255,255,.06);display:flex;align-items:center;font-size:13px;color:#dce9ff}
+    .content{height:738px;padding:16px;display:grid;grid-template-rows:44fr 24fr 32fr;gap:12px}
+    .row{min-height:0;display:grid;gap:12px}
+    .r1{grid-template-columns:5fr 4fr 3fr}.r2{grid-template-columns:1fr}.r3{grid-template-columns:8fr 4fr}
+    .card{border:1px solid var(--line);background:var(--glass);border-radius:22px;padding:14px;min-height:0}
+    .big{background:linear-gradient(140deg,rgba(22,75,126,.6),rgba(8,35,73,.55),rgba(10,80,116,.46))}
+    .small-title{font-size:11px;letter-spacing:.08em;color:var(--muted)}
+    .temp{font-size:106px;font-weight:800;line-height:.88;margin:4px 0 10px}
+    .meta5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.mini{border:1px solid rgba(167,195,236,.24);border-radius:14px;padding:8px;background:rgba(7,14,30,.35);font-size:12px}
+    .mini b{display:block;margin-top:3px;font-size:28px;line-height:1.05}
+    .metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.m{border:1px solid rgba(167,195,236,.2);border-radius:14px;padding:8px;background:rgba(7,14,30,.32)}
+    .m .k{font-size:11px;color:var(--muted)} .m .v{font-size:28px;font-weight:800;line-height:1.1;margin-top:3px}
+    .aqi-main{border:1px solid rgba(167,195,236,.2);border-radius:14px;padding:10px;background:rgba(7,14,30,.32)}
+    .aqi-sub{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    .k{font-size:11px;color:var(--muted)} .v{font-size:31px;font-weight:800}
+    .hour-wrap{height:100%;display:grid;grid-template-rows:auto 1fr auto;gap:8px}
+    .hours{display:grid;grid-template-columns:repeat(10,1fr);gap:8px}
+    .h{border:1px solid rgba(167,195,236,.2);border-radius:14px;background:rgba(7,14,30,.34);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:8px 2px}
+    .h .t{font-size:11px;color:var(--muted)} .h .w{font-size:20px;margin:6px 0 3px} .h .p{font-size:12px;font-weight:700}
+    .rain{height:40px;border:1px solid rgba(167,195,236,.18);border-radius:12px;background:linear-gradient(90deg,rgba(43,110,172,.35),rgba(42,195,246,.24));display:flex;align-items:center;padding:0 12px;font-size:13px}
+    .trend{display:grid;gap:8px}.line{display:grid;grid-template-columns:58px 22px 1fr 78px;gap:8px;align-items:center}
+    .bar{height:8px;border-radius:999px;background:rgba(146,173,216,.2);position:relative}.fill{height:8px;border-radius:999px;background:linear-gradient(90deg,#34c9ff,#ffd156)}
+    .life{display:grid;gap:8px}.life-row{height:44px;border:1px solid rgba(167,195,236,.2);border-radius:14px;background:rgba(7,14,30,.34);display:flex;align-items:center;justify-content:space-between;padding:0 12px}
+    .hint{font-size:11px;color:var(--a)}
+  </style>
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>`n</head>
+<body>
+<main class="page">
+  <section class="board">
+    <header class="head">
+      <div>
+        <div class="title">金寨县</div>
+        <div class="sub">更新于 16:06 · 状态帧：Default</div>
+      </div>
+      <div class="btns"><div class="btn">刷新</div><div class="btn">关闭</div></div>
+    </header>
+
+    <div class="content">
+      <div class="row r1">
+        <article class="card big">
+          <div class="small-title">当前位置</div>
+          <div class="temp">11°</div>
+          <div style="font-size:40px;font-weight:700;line-height:1">多云</div>
+          <div class="meta5" style="margin-top:10px">
+            <div class="mini"><span class="k">体感</span><b>10°</b></div>
+            <div class="mini"><span class="k">紫外线</span><b style="font-size:20px">4.05 中等</b></div>
+            <div class="mini"><span class="k">日出</span><b style="font-size:23px">06:46</b></div>
+            <div class="mini"><span class="k">日落</span><b style="font-size:23px">18:14</b></div>
+            <div class="mini"><span class="k">风向</span><b style="font-size:23px">东北</b></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="small-title">实时指标</div>
+          <div class="metrics">
+            <div class="m"><div class="k">湿度</div><div class="v">91%</div></div>
+            <div class="m"><div class="k">风速</div><div class="v">6</div><div class="k">km/h · 东北</div></div>
+            <div class="m"><div class="k">能见度</div><div class="v">24 km</div></div>
+            <div class="m"><div class="k">气压</div><div class="v">1014 hPa</div></div>
+            <div class="m"><div class="k">未来2小时降水</div><div class="v">0 mm</div></div>
+            <div class="m"><div class="k">阵风风险</div><div class="v">22 低</div></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="small-title">空气质量</div>
+          <div class="aqi-main" style="margin-top:8px"><div class="k">AQI</div><div class="v">63</div><div class="k">良</div></div>
+          <div class="aqi-sub">
+            <div class="m"><div class="k">PM2.5</div><div class="v" style="font-size:26px">15</div></div>
+            <div class="m"><div class="k">PM10</div><div class="v" style="font-size:26px">16</div></div>
+            <div class="m"><div class="k">臭氧</div><div class="v" style="font-size:26px">60</div></div>
+            <div class="m"><div class="k">二氧化氮</div><div class="v" style="font-size:26px">13</div></div>
+          </div>
+        </article>
+      </div>
+
+      <article class="row r2">
+        <section class="card hour-wrap">
+          <div class="small-title">24小时预报</div>
+          <div class="hours">
+            <div class="h"><div class="t">现在</div><div class="w">☁</div><div class="p">11°</div></div>
+            <div class="h"><div class="t">17:00</div><div class="w">☁</div><div class="p">11°</div></div>
+            <div class="h"><div class="t">18:00</div><div class="w">☂</div><div class="p">10°</div></div>
+            <div class="h"><div class="t">19:00</div><div class="w">☂</div><div class="p">10°</div></div>
+            <div class="h"><div class="t">20:00</div><div class="w">☂</div><div class="p">10°</div></div>
+            <div class="h"><div class="t">21:00</div><div class="w">☂</div><div class="p">9°</div></div>
+            <div class="h"><div class="t">22:00</div><div class="w">☂</div><div class="p">9°</div></div>
+            <div class="h"><div class="t">23:00</div><div class="w">☂</div><div class="p">9°</div></div>
+            <div class="h"><div class="t">00:00</div><div class="w">☂</div><div class="p">9°</div></div>
+            <div class="h"><div class="t">01:00</div><div class="w">☂</div><div class="p">9°</div></div>
+          </div>
+          <div class="rain">降水趋势：未来2小时总降水 0 mm · 小时降水概率 5%~60%</div>
+        </section>
+      </article>
+
+      <div class="row r3">
+        <article class="card trend">
+          <div class="small-title">7日趋势</div>
+          <div class="line"><div>现在</div><div>☂</div><div class="bar"><div class="fill" style="width:74%"></div></div><div>7°/11°</div></div>
+          <div class="line"><div>周日</div><div>☂</div><div class="bar"><div class="fill" style="width:52%"></div></div><div>7°/9°</div></div>
+          <div class="line"><div>周一</div><div>☂</div><div class="bar"><div class="fill" style="width:36%"></div></div><div>4°/6°</div></div>
+          <div class="line"><div>周二</div><div>☁</div><div class="bar"><div class="fill" style="width:66%"></div></div><div>6°/10°</div></div>
+          <div class="line"><div>周三</div><div>☁</div><div class="bar"><div class="fill" style="width:82%"></div></div><div>5°/13°</div></div>
+          <div class="line"><div>周四</div><div>☂</div><div class="bar"><div class="fill" style="width:70%"></div></div><div>7°/12°</div></div>
+          <div class="line"><div>周五</div><div>☁</div><div class="bar"><div class="fill" style="width:63%"></div></div><div>6°/11°</div></div>
+        </article>
+
+        <article class="card life">
+          <div class="small-title">生活指数</div>
+          <div class="life-row"><span>运动</span><strong>适宜</strong></div>
+          <div class="life-row"><span>出行</span><strong>适宜</strong></div>
+          <div class="life-row"><span>垂钓</span><strong>适宜</strong></div>
+          <div class="life-row"><span>当前位置</span><strong>金寨县</strong></div>
+          <div class="hint">热点意图：刷新按钮 / 关闭按钮 / 小时卡切换（仅注释，不连原型）</div>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+</body>
+</html>
+

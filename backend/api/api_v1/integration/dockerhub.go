@@ -1,70 +1,82 @@
 package integration
 
 import (
+	"context"
+	"fmt"
+	"matrix-panel/db"
 	"matrix-panel/lib/integration/dockerhub"
+	"matrix-panel/models"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-// DockerHubReposHandler handles Docker Hub repositories requests
-func DockerHubReposHandler(c *gin.Context) {
+// GetDockerHubRepositories 获取 Docker Hub 仓库列表
+func GetDockerHubRepositories(c *gin.Context) {
 	var req struct {
-		Username string `json:"username" binding:"required"`
-		Limit    int    `json:"limit"`
+		IntegrationID string `json:"integrationId" binding:"required"`
+		Limit         int    `json:"limit"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "Invalid request: " + err.Error(),
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "参数错误: " + err.Error()})
 		return
 	}
 
-	if req.Limit == 0 {
+	if req.Limit <= 0 {
 		req.Limit = 10
 	}
 
-	client := dockerhub.NewDockerHubIntegration(req.Username)
-	repos, err := client.GetRepositories(req.Limit)
+	integration, err := getDockerHubIntegration(req.IntegrationID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   "Failed to get repositories: " + err.Error(),
-		})
+		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": "集成不存在"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success":      true,
-		"repositories": repos,
-	})
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	repos, err := integration.GetRepositories(ctx, req.Limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": repos})
 }
 
-// DockerHubTestConnectionHandler tests Docker Hub connection
+// DockerHubTestConnectionHandler 测试 Docker Hub 连接
 func DockerHubTestConnectionHandler(c *gin.Context) {
-	username := c.Query("username")
+	var req struct {
+		URL     string            `json:"url" binding:"required"`
+		Secrets map[string]string `json:"secrets"`
+	}
 
-	if username == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"error":   "username parameter required",
-		})
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": err.Error()})
 		return
 	}
 
-	client := dockerhub.NewDockerHubIntegration(username)
-	if err := client.TestConnection(); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"error":   err.Error(),
-		})
+	d := dockerhub.New("", "Test", req.URL, req.Secrets)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := d.TestConnection(ctx); err != nil {
+		c.JSON(http.StatusOK, gin.H{"success": false, "error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "Connection successful",
-	})
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "连接成功"})
+}
+
+func getDockerHubIntegration(id string) (*dockerhub.DockerHubIntegration, error) {
+	var integration models.Integration
+	if err := db.DB.First(&integration, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	integration.AfterFind()
+
+	return dockerhub.New(fmt.Sprintf("%d", integration.ID), integration.Name, integration.URL, integration.SecretMap), nil
 }

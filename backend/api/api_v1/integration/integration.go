@@ -1,15 +1,38 @@
 package integration
 
 import (
+	"context"
+	"strings"
+	"time"
+
+	"matrix-panel/api/api_v1/common/apiReturn"
 	"matrix-panel/db"
+	adguardlib "matrix-panel/lib/integration/adguard"
+	aria2lib "matrix-panel/lib/integration/aria2"
+	dashdotlib "matrix-panel/lib/integration/dashdot"
+	dockerlib "matrix-panel/lib/integration/docker"
+	dockerhublib "matrix-panel/lib/integration/dockerhub"
+	embylib "matrix-panel/lib/integration/emby"
+	gitlablib "matrix-panel/lib/integration/gitlab"
+	icallib "matrix-panel/lib/integration/ical"
+	jellyfinlib "matrix-panel/lib/integration/jellyfin"
+	jellyseerrlib "matrix-panel/lib/integration/jellyseerr"
+	lidarrlib "matrix-panel/lib/integration/lidarr"
+	overseerrlib "matrix-panel/lib/integration/overseerr"
+	piholelib "matrix-panel/lib/integration/pihole"
+	plexlib "matrix-panel/lib/integration/plex"
+	prowlarrlib "matrix-panel/lib/integration/prowlarr"
+	qbittorrentlib "matrix-panel/lib/integration/qbittorrent"
+	radarrlib "matrix-panel/lib/integration/radarr"
+	readarrlib "matrix-panel/lib/integration/readarr"
+	sonarrlib "matrix-panel/lib/integration/sonarr"
+	uptimekumalib "matrix-panel/lib/integration/uptimekuma"
 	"matrix-panel/models"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-// CreateIntegration 创建集成
-// POST /api/v1/integrations
+// CreateIntegration creates integration config.
 func CreateIntegration(c *gin.Context) {
 	var req struct {
 		Name    string            `json:"name" binding:"required"`
@@ -20,11 +43,10 @@ func CreateIntegration(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误: " + err.Error()})
+		apiReturn.ErrorParamFomat(c, err.Error())
 		return
 	}
 
-	// 创建集成实例
 	integration := models.Integration{
 		Name:   req.Name,
 		Kind:   req.Kind,
@@ -32,72 +54,45 @@ func CreateIntegration(c *gin.Context) {
 		Icon:   req.Icon,
 		Enable: true,
 	}
-
-	// 设置密钥
 	if req.Secrets != nil {
 		integration.SecretMap = req.Secrets
-		// BeforeSave钩子会自动序列化
 	}
 
-	// 保存到数据库
 	if err := db.DB.Create(&integration).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建失败: " + err.Error()})
+		apiReturn.ErrorDatabase(c, err.Error())
 		return
 	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    integration,
-	})
+	apiReturn.SuccessData(c, integration)
 }
 
-// GetIntegrations 获取集成列表
-// GET /api/v1/integrations
+// GetIntegrations returns integration list.
 func GetIntegrations(c *gin.Context) {
 	var integrations []models.Integration
-
-	// 查询所有集成
 	if err := db.DB.Find(&integrations).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "查询失败: " + err.Error()})
+		apiReturn.ErrorDatabase(c, err.Error())
 		return
 	}
-
-	// 填充SecretMap(AfterFind钩子会自动反序列化)
 	for i := range integrations {
 		integrations[i].AfterFind()
 	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    integrations,
-	})
+	apiReturn.SuccessData(c, integrations)
 }
 
-// GetIntegration 获取单个集成
-// GET /api/v1/integrations/:id
+// GetIntegration returns one integration by id.
 func GetIntegration(c *gin.Context) {
 	id := c.Param("id")
-
 	var integration models.Integration
 	if err := db.DB.First(&integration, "id = ?", id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "集成不存在"})
+		apiReturn.ErrorDataNotFound(c)
 		return
 	}
-
-	// 填充SecretMap
 	integration.AfterFind()
-
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    integration,
-	})
+	apiReturn.SuccessData(c, integration)
 }
 
-// UpdateIntegration 更新集成
-// PUT /api/v1/integrations/:id
+// UpdateIntegration updates integration fields.
 func UpdateIntegration(c *gin.Context) {
 	id := c.Param("id")
-
 	var req struct {
 		Name    *string           `json:"name"`
 		URL     *string           `json:"url"`
@@ -107,18 +102,16 @@ func UpdateIntegration(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误: " + err.Error()})
+		apiReturn.ErrorParamFomat(c, err.Error())
 		return
 	}
 
-	// 查询集成
 	var integration models.Integration
 	if err := db.DB.First(&integration, "id = ?", id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "集成不存在"})
+		apiReturn.ErrorDataNotFound(c)
 		return
 	}
 
-	// 准备更新数据
 	updates := make(map[string]interface{})
 	if req.Name != nil {
 		updates["name"] = *req.Name
@@ -132,76 +125,111 @@ func UpdateIntegration(c *gin.Context) {
 	if req.Enable != nil {
 		updates["enable"] = *req.Enable
 	}
-
-	// 更新密钥
 	if req.Secrets != nil {
 		integration.SecretMap = req.Secrets
 		integration.BeforeSave()
 		updates["secrets"] = integration.Secrets
 	}
 
-	// 执行更新
 	if err := db.DB.Model(&integration).Updates(updates).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新失败: " + err.Error()})
+		apiReturn.ErrorDatabase(c, err.Error())
 		return
 	}
 
-	// 重新查询最新数据
-	db.DB.First(&integration, "id = ?", id)
+	if err := db.DB.First(&integration, "id = ?", id).Error; err != nil {
+		apiReturn.ErrorDatabase(c, err.Error())
+		return
+	}
 	integration.AfterFind()
-
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    integration,
-	})
+	apiReturn.SuccessData(c, integration)
 }
 
-// DeleteIntegration 删除集成
-// DELETE /api/v1/integrations/:id
+// DeleteIntegration deletes integration by id.
 func DeleteIntegration(c *gin.Context) {
 	id := c.Param("id")
-
-	// 执行删除
 	result := db.DB.Delete(&models.Integration{}, "id = ?", id)
 	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除失败: " + result.Error.Error()})
+		apiReturn.ErrorDatabase(c, result.Error.Error())
 		return
 	}
-
 	if result.RowsAffected == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "集成不存在"})
+		apiReturn.ErrorDataNotFound(c)
 		return
 	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "删除成功",
-	})
+	apiReturn.Success(c)
 }
 
-// TestIntegration 测试集成连接
-// POST /api/v1/integrations/test
+// TestIntegration tests external integration connectivity by kind.
 func TestIntegration(c *gin.Context) {
 	var req struct {
 		Kind    string            `json:"kind" binding:"required"`
 		URL     string            `json:"url" binding:"required"`
 		Secrets map[string]string `json:"secrets"`
 	}
-
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误: " + err.Error()})
+		apiReturn.ErrorParamFomat(c, err.Error())
 		return
 	}
 
-	// TODO: 根据Kind创建对应的集成实例并测试连接
-	// 目前返回成功(待实现具体测试逻辑)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "连接测试成功",
-		"data": map[string]interface{}{
-			"kind":   req.Kind,
-			"status": "connected",
-		},
+	kind := strings.ToLower(strings.TrimSpace(req.Kind))
+	var err error
+
+	switch kind {
+	case "dashdot":
+		err = dashdotlib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "ical":
+		err = icallib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "gitlab":
+		err = gitlablib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "docker":
+		err = dockerlib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "dockerhub":
+		err = dockerhublib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "uptimekuma":
+		err = uptimekumalib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "plex":
+		err = plexlib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "qbittorrent":
+		err = qbittorrentlib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "adguard":
+		err = adguardlib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "pihole":
+		err = piholelib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "aria2":
+		err = aria2lib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "jellyfin":
+		err = jellyfinlib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "emby":
+		err = embylib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "overseerr":
+		err = overseerrlib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "jellyseerr":
+		err = jellyseerrlib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "sonarr":
+		err = sonarrlib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "radarr":
+		err = radarrlib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "lidarr":
+		err = lidarrlib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "readarr":
+		err = readarrlib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	case "prowlarr":
+		err = prowlarrlib.New("", "Test", req.URL, req.Secrets).TestConnection(ctx)
+	default:
+		apiReturn.Error(c, "unsupported integration kind: "+req.Kind)
+		return
+	}
+
+	if err != nil {
+		apiReturn.Error(c, err.Error())
+		return
+	}
+
+	apiReturn.SuccessData(c, map[string]interface{}{
+		"kind":   req.Kind,
+		"status": "connected",
 	})
 }

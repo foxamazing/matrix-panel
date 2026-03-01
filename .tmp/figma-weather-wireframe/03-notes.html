@@ -1,0 +1,71 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03_Notes</title>
+  <style>
+    :root{--bg:#070d1a;--glass:rgba(15,28,56,.58);--line:rgba(167,195,236,.22);--txt:#eef5ff;--muted:#9ab0d4;--ok:#7fd8ff}
+    *{box-sizing:border-box} body{margin:0;background:radial-gradient(1400px 750px at 72% 20%,#223a70 0%,#091126 56%,#050910 100%);font-family:"PingFang SC","Microsoft YaHei",sans-serif;color:var(--txt)}
+    .page{width:1536px;min-height:864px;margin:0 auto;padding:26px}.card{border:1px solid var(--line);background:var(--glass);border-radius:24px;padding:18px 20px}
+    h1{margin:0 0 6px;font-size:34px}.sub{color:var(--muted)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+    h3{margin:0 0 10px;font-size:18px}.list{line-height:1.72;font-size:14px}
+    ul{margin:8px 0 0 18px}.ok{color:var(--ok);font-weight:700}
+    .hot{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+    .chip{height:88px;border:1px dashed rgba(127,216,255,.45);border-radius:14px;display:flex;align-items:center;justify-content:center;background:rgba(8,16,34,.3);font-size:13px}
+  </style>
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>`n</head>
+<body>
+  <main class="page">
+    <h1>03_Notes</h1>
+    <div class="sub">模块优先级、裁剪策略、线框阶段热点意图（不连原型）</div>
+
+    <section class="grid">
+      <article class="card">
+        <h3>模块优先级（不可删）</h3>
+        <div class="list">
+          P0：当前温度 / 天气现象 / 24小时 / 7日 / AQI
+          <br/>P1：体感 / 日出日落 / 湿度风速能见度气压
+          <br/>P2：生活指数 / 位置描述
+          <br/><br/><span class="ok">短高度（1536×768）只允许“压缩密度”，不允许删除 P0/P1。</span>
+        </div>
+      </article>
+
+      <article class="card">
+        <h3>裁剪与收缩规则（无滚动）</h3>
+        <ul class="list">
+          <li>保持 44/24/32 三段比例</li>
+          <li>24小时默认 10 卡，超宽扩展 12 卡</li>
+          <li>数字字号采用区间收缩，不低于可读阈值</li>
+          <li>卡片内边距从 18 → 10 收缩</li>
+          <li>边框透明度与圆角保持一致，避免视觉噪声</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h3>点击热点意图（静态标注）</h3>
+        <div class="hot">
+          <div class="chip">刷新按钮<br/>触发天气重载</div>
+          <div class="chip">关闭按钮<br/>退出全屏层</div>
+          <div class="chip">小时卡带<br/>切换关注时刻</div>
+        </div>
+      </article>
+
+      <article class="card">
+        <h3>验收清单</h3>
+        <ul class="list">
+          <li>1536×864：全模块完整可见，无纵向滚动</li>
+          <li>1536×768：仍无滚动，核心指标可读</li>
+          <li>中文长标签不截断关键语义</li>
+          <li>3 秒内可定位“当前 / 降水 / 趋势 / 空气质量”</li>
+          <li>玻璃拟态风格一致：圆角 / 边框 / 层次统一</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
+

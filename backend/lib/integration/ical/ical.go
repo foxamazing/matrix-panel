@@ -1,8 +1,9 @@
 package ical
 
 import (
+	"context"
 	"fmt"
-	"io"
+	"matrix-panel/lib/integration"
 	"net/http"
 	"time"
 
@@ -11,8 +12,7 @@ import (
 
 // ICalIntegration represents an iCalendar feed integration
 type ICalIntegration struct {
-	FeedURL string
-	client  *http.Client
+	*integration.BaseIntegration
 }
 
 // CalendarEvent represents a parsed calendar event
@@ -28,19 +28,21 @@ type CalendarEvent struct {
 	Status      string    `json:"status"`
 }
 
-// NewICalIntegration creates a new iCalendar integration
-func NewICalIntegration(feedURL string) *ICalIntegration {
+// New 创建 iCalendar 集成实例
+func New(id, name, url string, secrets map[string]string) *ICalIntegration {
 	return &ICalIntegration{
-		FeedURL: feedURL,
-		client: &http.Client{
-			Timeout: 15 * time.Second,
-		},
+		BaseIntegration: integration.NewBaseIntegration(id, name, "ical", url, secrets),
 	}
 }
 
 // TestConnection tests the iCal feed connection
-func (i *ICalIntegration) TestConnection() error {
-	resp, err := i.client.Get(i.FeedURL)
+func (i *ICalIntegration) TestConnection(ctx context.Context) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", i.URL, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := i.Client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to connect to iCal feed: %w", err)
 	}
@@ -50,18 +52,17 @@ func (i *ICalIntegration) TestConnection() error {
 		return fmt.Errorf("iCal feed returned status code %d", resp.StatusCode)
 	}
 
-	// Try to parse to verify it's valid iCal
-	_, err = io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read iCal feed: %w", err)
-	}
-
 	return nil
 }
 
-// GetUpcomingEvents retrieves upcoming events from the iCal feed
-func (i *ICalIntegration) GetUpcomingEvents(limit int) ([]CalendarEvent, error) {
-	resp, err := i.client.Get(i.FeedURL)
+// GetEvents retrieves upcoming events from the iCal feed
+func (i *ICalIntegration) GetEvents(ctx context.Context) ([]CalendarEvent, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", i.URL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := i.Client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch iCal feed: %w", err)
 	}
@@ -87,22 +88,22 @@ func (i *ICalIntegration) GetUpcomingEvents(limit int) ([]CalendarEvent, error) 
 			continue
 		}
 
-		// Only include future events
-		if dtStart.Before(now) {
+		// Only include future events or events starting within last 24h
+		if dtStart.Before(now.Add(-24 * time.Hour)) {
 			continue
 		}
 
 		dtEnd, _ := event.GetEndAt()
 
 		calEvent := CalendarEvent{
-			UID:         event.GetProperty(ics.ComponentPropertyUniqueId).Value,
-			Summary:     event.GetProperty(ics.ComponentPropertySummary).Value,
-			Description: event.GetProperty(ics.ComponentPropertyDescription).Value,
-			Location:    event.GetProperty(ics.ComponentPropertyLocation).Value,
+			UID:         i.getPropertyValue(event, ics.ComponentPropertyUniqueId),
+			Summary:     i.getPropertyValue(event, ics.ComponentPropertySummary),
+			Description: i.getPropertyValue(event, ics.ComponentPropertyDescription),
+			Location:    i.getPropertyValue(event, ics.ComponentPropertyLocation),
 			StartTime:   dtStart,
 			EndTime:     dtEnd,
 			AllDay:      false,
-			Status:      event.GetProperty(ics.ComponentPropertyStatus).Value,
+			Status:      i.getPropertyValue(event, ics.ComponentPropertyStatus),
 		}
 
 		if startProp := event.GetProperty(ics.ComponentPropertyDtStart); startProp != nil {
@@ -121,11 +122,15 @@ func (i *ICalIntegration) GetUpcomingEvents(limit int) ([]CalendarEvent, error) 
 		}
 
 		events = append(events, calEvent)
-
-		if len(events) >= limit {
-			break
-		}
 	}
 
 	return events, nil
+}
+
+func (i *ICalIntegration) getPropertyValue(event *ics.VEvent, prop ics.ComponentProperty) string {
+	p := event.GetProperty(prop)
+	if p != nil {
+		return p.Value
+	}
+	return ""
 }

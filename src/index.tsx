@@ -1,8 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import '../index.css';
-import 'react-grid-layout/css/styles.css';
-import 'react-resizable/css/styles.css';
+import './style/index.css';
 import App from './App';
 
 import { ConfigProvider } from './providers/ConfigProvider';

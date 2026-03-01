@@ -124,7 +124,7 @@ const AppGrid: React.FC<AppGridProps> = ({
   };
 
   return (
-    <section className="w-full max-w-5xl mx-auto px-4 pb-8 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+    <section className="w-full max-w-5xl mx-auto px-4 pb-12 animate-fade-in group/grid" style={{ animationDelay: '0.3s' }}>
       {groups.length === 0 && (
         <div className="text-center py-12 text-[var(--text-secondary)] glass-panel rounded-2xl">
           <p>暂无应用分组{isAdmin && "，点击下方按钮开始添加"}</p>
@@ -156,15 +156,15 @@ const AppGrid: React.FC<AppGridProps> = ({
 
               {isAdmin && (
                 <div className={`flex gap-2 transition-opacity ${isEditMode ? 'opacity-100' : 'opacity-0 group-hover/header:opacity-100'}`}>
-                  <button onClick={() => onEditGroup(gIndex)} className="p-2 rounded-lg hover:bg-[var(--glass-bg-hover)] text-[var(--text-secondary)] hover:text-theme transition-colors" title="Edit"><Edit2 className="w-4 h-4" /></button>
-                  <button onClick={() => onAddApp(gIndex)} className="p-2 rounded-lg hover:bg-[var(--glass-bg-hover)] text-[var(--text-secondary)] hover:text-theme transition-colors" title="Add"><Plus className="w-4 h-4" /></button>
-                  <button onClick={() => onDeleteGroup(gIndex)} className="p-2 rounded-lg hover:bg-red-500/10 text-[var(--text-secondary)] hover:text-red-500 transition-colors" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                  <button onClick={() => onEditGroup(gIndex)} className="p-2 rounded-lg hover:bg-[var(--glass-bg-hover)] text-[var(--text-secondary)] hover:text-theme transition-colors" title="编辑分组"><Edit2 className="w-4 h-4" /></button>
+                  <button onClick={() => onAddApp(gIndex)} className="p-2 rounded-lg hover:bg-[var(--glass-bg-hover)] text-[var(--text-secondary)] hover:text-theme transition-colors" title="添加应用"><Plus className="w-4 h-4" /></button>
+                  <button onClick={() => onDeleteGroup(gIndex)} className="p-2 rounded-lg hover:bg-red-500/10 text-[var(--text-secondary)] hover:text-red-500 transition-colors" title="删除分组"><Trash2 className="w-4 h-4" /></button>
                 </div>
               )}
             </div>
 
             <div
-              className={`grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3 ${isCollapsed ? 'hidden' : 'grid'}`}
+              className={`grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 grid-flow-dense ${isCollapsed ? 'hidden' : 'grid'}`}
               onDragEnter={(e) => onGroupDragEnter(e, gIndex)}
               onDragOver={e => e.preventDefault()}
             >
@@ -181,36 +181,42 @@ const AppGrid: React.FC<AppGridProps> = ({
                     onDragOver={e => e.preventDefault()}
                     onDragEnd={onDragEnd}
                     className={`
-                      relative group/app rounded-2xl p-3 aspect-square flex flex-col items-center justify-center gap-2 transition-all duration-500 ease-spring-bouncy
-                      ${isEditMode ? 'cursor-move ring-2 ring-dashed ring-theme/20 bg-[var(--glass-bg-hover)]' : 'glass-panel hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-theme/20 hover:border-theme/40 cursor-pointer'}
+                      relative group/app rounded-2xl p-2 flex flex-col justify-center gap-1 items-center overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                      col-span-1 row-span-1
+                      ${isEditMode ? 'cursor-move ring-2 ring-dashed ring-theme/30 bg-[var(--glass-bg-hover)]' : 'glass-panel hover:-translate-y-1 hover:shadow-md hover:border-theme/40 cursor-pointer'}
                     `}
                     onClick={() => !isEditMode && window.open(app.url, '_blank')}
+                    style={{ minHeight: '60px' }} // 极简紧凑尺寸
                   >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover/app:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
                     {app.docker?.enabled && !isEditMode && (
-                      <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter ${isRunning ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
-                        {isRunning ? 'Online' : 'Offline'}
+                      <div className={`absolute top-4 right-4 z-20 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md border ${isRunning ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
+                        {isRunning ? 'ON' : 'OFF'}
                       </div>
                     )}
 
                     {isEditMode && (
-                      <div className="absolute -top-2 -right-2 flex gap-1 z-20">
-                        <button onClick={e => { e.stopPropagation(); onEditApp(gIndex, aIndex); }} className="p-1.5 bg-theme text-white rounded-full shadow-lg border border-white/20"><Edit2 className="w-3 h-3" /></button>
-                        <button onClick={e => { e.stopPropagation(); onDeleteApp(gIndex, aIndex); }} className="p-1.5 bg-red-500 text-white rounded-full shadow-lg border border-white/20"><X className="w-3 h-3" /></button>
+                      <div className="absolute -top-1 -right-1 flex gap-1 z-20">
+                        <button onClick={e => { e.stopPropagation(); onEditApp(gIndex, aIndex); }} className="p-2 bg-theme text-white rounded-full shadow-xl border border-white/20 hover:scale-110 active:scale-90 transition-all"><Edit2 className="w-3.5 h-3.5" /></button>
+                        <button onClick={e => { e.stopPropagation(); onDeleteApp(gIndex, aIndex); }} className="p-2 bg-red-500 text-white rounded-full shadow-xl border border-white/20 hover:scale-110 active:scale-90 transition-all"><X className="w-3.5 h-3.5" /></button>
                       </div>
                     )}
 
-                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-[var(--glass-bg-base)] flex items-center justify-center border border-[var(--glass-border)] shadow-inner group-hover/app:scale-110 transition-transform duration-500">
+                    <div className={`w-8 h-8 md:w-10 md:h-10 shrink-0 rounded-[0.9rem] bg-gradient-to-b from-[var(--glass-bg-hover)] to-transparent flex items-center justify-center border border-[var(--glass-border)] shadow-sm group-hover/app:scale-110 group-active/app:scale-95 transition-transform duration-300 z-10`}>
                       <img
                         src={app.icon}
                         alt={app.name}
-                        className="w-8 h-8 md:w-10 md:h-10 object-contain drop-shadow-md"
+                        className="w-[60%] h-[60%] object-contain drop-shadow-sm"
                         onError={e => e.currentTarget.src = 'https://api.iconify.design/ph:app-window.svg'}
                       />
                     </div>
 
-                    <span className="text-[13px] font-bold text-center line-clamp-2 w-full px-1 text-[var(--text-primary)]">
-                      {app.name}
-                    </span>
+                    <div className={`flex flex-col z-10 items-center w-full`}>
+                      <span className={`font-black text-[var(--text-primary)] tracking-tight text-[10px] md:text-[11px] text-center truncate w-full px-1`}>
+                        {app.name}
+                      </span>
+                    </div>
                   </div>
                 );
               })}
@@ -218,10 +224,12 @@ const AppGrid: React.FC<AppGridProps> = ({
               {isAdmin && !isEditMode && (
                 <button
                   onClick={() => onAddApp(gIndex)}
-                  className="rounded-2xl p-3 flex flex-col items-center justify-center gap-2 glass-panel border-dashed border-2 border-[var(--glass-border)] text-[var(--text-muted)] hover:text-theme hover:border-theme transition-all aspect-square group/add"
+                  className="col-span-1 row-span-1 min-h-[60px] rounded-2xl p-2 flex flex-col items-center justify-center gap-1 glass-panel border-dashed border border-[var(--glass-border)] text-[var(--text-muted)] hover:text-theme hover:border-theme/40 transition-all hover:-translate-y-1 hover:shadow-md group/add"
                 >
-                  <Plus className="w-6 h-6 group-hover/add:scale-125 transition-transform" />
-                  <span className="text-[11px] font-bold uppercase tracking-widest opacity-60">Add</span>
+                  <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-[var(--glass-bg-hover)] flex items-center justify-center group-hover/add:scale-110 transition-transform">
+                    <Plus className="w-3 h-3 text-[var(--text-secondary)]" />
+                  </div>
+                  <span className="text-[10px] font-bold tracking-tight opacity-80">添加应用</span>
                 </button>
               )}
             </div>
@@ -230,7 +238,7 @@ const AppGrid: React.FC<AppGridProps> = ({
       })}
 
       {isAdmin && (
-        <div className="flex justify-center mt-10 gap-4">
+        <div className={`flex justify-center mt-10 gap-4 transition-all duration-500 ${isEditMode ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 group-hover/grid:opacity-100 group-hover/grid:translate-y-0'}`}>
           <button onClick={onAddGroup} className="flex items-center gap-2 px-6 py-3 rounded-full glass-panel hover:bg-[var(--glass-bg-hover)] font-bold text-sm transition-all active:scale-95 shadow-xl">
             <Plus className="w-5 h-5 text-theme" /> 新建分组
           </button>

@@ -53,6 +53,7 @@ func GetDb() (*gorm.DB, error) {
 
 	dbModels := []interface{}{
 		&User{},
+		&Invite{},
 	}
 	dbDrive := "mysql"
 

@@ -12,6 +12,11 @@ import Background from './components/Background';
 import Clock from './components/Clock';
 import SearchBar from './components/SearchBar';
 import WeatherWidget from './components/WeatherWidget';
+import CalendarWidget from './components/CalendarWidget';
+import QuoteWidget from './components/QuoteWidget';
+import ExchangeRateWidget from './components/ExchangeRateWidget';
+import CountdownWidget from './components/CountdownWidget';
+import GalleryWidget from './components/GalleryWidget';
 import LoginModal from './components/LoginModal';
 import LockScreen from './components/LockScreen';
 
@@ -31,7 +36,7 @@ import { AnimatedLayoutIcon, AnimatedSettingsIcon, AnimatedLanguagesIcon, Animat
 import { apiClient } from './services/client';
 
 const App: React.FC = () => {
-  const { config, updateConfig } = useConfig();
+  const { config, updateConfig, setIsSavingDisabled } = useConfig();
   const { isDarkMode, themeColor } = useTheme();
   const {
     currentUser, isSiteLocked, isUnlocking, isLoginModalOpen, loginTarget,
@@ -102,9 +107,18 @@ const App: React.FC = () => {
     setConfirmConfig({
       isOpen: true, title: t.settings.security.reset, message: t.settings.security.resetDesc,
       onConfirm: async () => {
-        try { await apiClient.post('/system/resetAll', {}); } finally {
+        setIsSavingDisabled(true);
+        try {
+          // 1. 先发重置请求，确保持有效令牌执行
+          await apiClient.post('/system/resetAll', {});
+          // 2. 重置成功后再发起注销，清理会话
+          await logout();
+          // 3. 最后清理本地存储并重载
           localStorage.clear();
           window.location.reload();
+        } catch (err) {
+          setIsSavingDisabled(false);
+          alert('重置失败');
         }
       }
     });
@@ -115,13 +129,13 @@ const App: React.FC = () => {
   const appGridHandlers = {
     onAddGroup: () => {
       if (!requireLogin() || currentUser?.role !== 'admin') return;
-      openFormModal(t.common.add + ' Group', [{ name: 'name', label: 'Name', required: true }], (data) => {
+      openFormModal('新建分组', [{ name: 'name', label: '分组名称', required: true, placeholder: '例：媒体服务' }], (data) => {
         updateConfig(prev => ({ ...prev, appGroups: [...prev.appGroups, { id: `group-${Date.now()}`, name: data.name, apps: [] }] }));
       });
     },
     onEditGroup: (index: number) => {
       if (!requireLogin() || currentUser?.role !== 'admin') return;
-      openFormModal(t.common.edit + ' Group', [{ name: 'name', label: 'Name', defaultValue: config.appGroups[index].name, required: true }], (data) => {
+      openFormModal('编辑分组', [{ name: 'name', label: '分组名称', defaultValue: config.appGroups[index].name, required: true }], (data) => {
         updateConfig(prev => { const n = [...prev.appGroups]; n[index] = { ...n[index], name: data.name }; return { ...prev, appGroups: n }; });
       });
     },
@@ -135,13 +149,13 @@ const App: React.FC = () => {
     },
     onAddApp: (gIdx: number) => {
       if (!requireLogin() || currentUser?.role !== 'admin') return;
-      openFormModal(t.common.add + ' App', [
-        { name: 'name', label: 'Name', required: true },
-        { name: 'url', label: 'URL', required: true },
-        { name: 'icon', label: 'Icon URL' },
-        { name: 'dockerEnabled', label: 'Docker', type: 'checkbox', defaultValue: 'false' },
-        { name: 'dockerContainer', label: 'Docker Container', defaultValue: '' },
-        { name: 'dockerShowControls', label: 'Controls', type: 'checkbox', defaultValue: 'false' },
+      openFormModal('添加新应用', [
+        { name: 'name', label: '应用名称', required: true, placeholder: '例如：Jellyfin / 极空间' },
+        { name: 'url', label: '访问链接 (URL)', required: true, placeholder: 'https://myservice.com' },
+        { name: 'icon', label: '自定义图标 URL', placeholder: '留空将尝试根据 URL 自动匹配' },
+        { name: 'dockerEnabled', label: '启用 Docker 状态感知', type: 'checkbox', defaultValue: 'false' },
+        { name: 'dockerContainer', label: '关联容器名称 / ID', defaultValue: '', placeholder: '输入完整容器名以实时获取状态' },
+        { name: 'dockerShowControls', label: '启用快捷管理入口', type: 'checkbox', defaultValue: 'false' },
       ], (d) => {
         const appId = `app-${Date.now()}`;
         const icon = d.icon || `https://api.iconify.design/ph:app-window.svg`;
@@ -163,13 +177,13 @@ const App: React.FC = () => {
       if (!requireLogin() || currentUser?.role !== 'admin') return;
       const app = config.appGroups[gIdx]?.apps[aIdx];
       if (!app) return;
-      openFormModal(t.common.edit + ' App', [
-        { name: 'name', label: 'Name', defaultValue: app.name, required: true },
-        { name: 'url', label: 'URL', defaultValue: app.url, required: true },
-        { name: 'icon', label: 'Icon URL', defaultValue: app.icon },
-        { name: 'dockerEnabled', label: 'Docker', type: 'checkbox', defaultValue: app.docker?.enabled ? 'true' : 'false' },
-        { name: 'dockerContainer', label: 'Docker Container', defaultValue: app.docker?.container || '' },
-        { name: 'dockerShowControls', label: 'Controls', type: 'checkbox', defaultValue: app.docker?.showControls ? 'true' : 'false' },
+      openFormModal('编辑应用配置', [
+        { name: 'name', label: '应用名称', defaultValue: app.name, required: true },
+        { name: 'url', label: '访问链接 (URL)', defaultValue: app.url, required: true },
+        { name: 'icon', label: '图标 URL', defaultValue: app.icon },
+        { name: 'dockerEnabled', label: '启用 Docker 状态感知', type: 'checkbox', defaultValue: app.docker?.enabled ? 'true' : 'false' },
+        { name: 'dockerContainer', label: '关联容器名称 / ID', defaultValue: app.docker?.container || '' },
+        { name: 'dockerShowControls', label: '启用快捷管理入口', type: 'checkbox', defaultValue: app.docker?.showControls ? 'true' : 'false' },
       ], (d) => {
         const icon = d.icon || app.icon;
         const docker = d.dockerEnabled ? { enabled: true, container: d.dockerContainer, showControls: d.dockerShowControls } : undefined;
@@ -241,6 +255,24 @@ const App: React.FC = () => {
 
                     <SearchBar onPlayContext={handlePlayContext} />
 
+                    <div className="w-full max-w-[1000px] px-4 pb-4 flex justify-center gap-4 flex-wrap">
+                      <div className="w-[180px] h-[180px] shrink-0">
+                        <CalendarWidget />
+                      </div>
+                      <div className="w-[180px] h-[180px] shrink-0">
+                        <QuoteWidget />
+                      </div>
+                      <div className="w-[180px] h-[180px] shrink-0">
+                        <ExchangeRateWidget />
+                      </div>
+                      <div className="w-[180px] h-[180px] shrink-0">
+                        <CountdownWidget />
+                      </div>
+                      <div className="w-[180px] h-[180px] shrink-0">
+                        <GalleryWidget />
+                      </div>
+                    </div>
+
                     <AppGrid
                       {...appGridHandlers}
                       isEditMode={isEditMode}
@@ -256,14 +288,22 @@ const App: React.FC = () => {
         )}
 
         <Suspense fallback={null}>
-          <MusicWidget config={config.musicConfig} onUpdate={handleMusicConfigUpdate} playRequest={playContext} isDarkMode={isDarkMode} themeColor={themeColor} />
+          {(!isSiteLocked || isUnlocking) && (
+            <MusicWidget
+              config={config.musicConfig}
+              onUpdate={handleMusicConfigUpdate}
+              playRequest={playContext}
+              isDarkMode={isDarkMode}
+              themeColor={themeColor}
+            />
+          )}
           <SettingsModal
             isOpen={isSettingsOpen}
             onClose={() => setIsSettingsOpen(false)}
-            onReset={() => { updateConfig(DEFAULT_CONFIG); setIsSettingsOpen(false); }}
+            onReset={handleReset}
           />
           <ActionModal isOpen={modalConfig.isOpen} title={modalConfig.title} fields={modalConfig.fields} onSubmit={modalConfig.onSubmit} onClose={() => setModalConfig(p => ({ ...p, isOpen: false }))} themeColor={themeColor} />
-          <ConfirmModal isOpen={confirmConfig.isOpen} title={confirmConfig.title} message={confirmConfig.message} onConfirm={confirmConfig.onConfirm} onClose={() => setConfirmConfig(p => ({ ...p, isOpen: false }))} themeColor={themeColor} />
+          <ConfirmModal isOpen={confirmConfig.isOpen} title={confirmConfig.title} message={confirmConfig.message} onConfirm={confirmConfig.onConfirm} onClose={() => setConfirmConfig(p => ({ ...p, isOpen: false }))} />
         </Suspense>
 
         <LoginModal

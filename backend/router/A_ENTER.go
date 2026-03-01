@@ -2,29 +2,32 @@ package router
 
 import (
 	"matrix-panel/global"
-	// "matrix-panel/router/admin"
+	"matrix-panel/router/integration"
 	"matrix-panel/router/openness"
 	"matrix-panel/router/panel"
 	"matrix-panel/router/system"
+	"matrix-panel/router/widget"
 
 	"github.com/gin-gonic/gin"
 )
 
-// 初始化总路由
+// InitRouters initializes all HTTP routes and starts the server.
 func InitRouters(addr string) error {
 	router := gin.Default()
 	rootRouter := router.Group("/")
 	routerGroup := rootRouter.Group("api")
 
-	// 设置文件上传大小限制
-	router.MaxMultipartMemory = 32 << 20 // 32MB
+	// File upload limit: 32MB
+	router.MaxMultipartMemory = 32 << 20
 
-	// 接口
+	// API routers
 	system.Init(routerGroup)
 	panel.Init(routerGroup)
+	integration.Init(routerGroup)
+	widget.Init(routerGroup)
 	openness.Init(routerGroup)
 
-	// WEB文件服务
+	// Static web assets
 	{
 		webPath := "./web"
 		router.StaticFile("/", webPath+"/index.html")
@@ -35,7 +38,7 @@ func InitRouters(addr string) error {
 		router.StaticFile("/favicon.svg", webPath+"/favicon.svg")
 	}
 
-	// 上传的文件
+	// Uploaded files
 	sourcePath := global.Config.GetValueString("base", "source_path")
 	router.Static(sourcePath[1:], sourcePath)
 

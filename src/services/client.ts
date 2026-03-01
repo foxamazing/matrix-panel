@@ -66,10 +66,21 @@ async function handleResponse(res: Response) {
       }
     } catch {
     }
-    throw new Error(data.msg || '登录状态已过期，请重新登录');
+    throw new Error(data.msg || 'Unauthorized');
+  }
+  // Compatible with endpoints returning { success, data, error }.
+  if (typeof data.code !== 'number' && typeof data.success === 'boolean') {
+    if (!data.success) {
+      throw new Error(data.error || data.msg || 'Unknown error');
+    }
+    return {
+      code: 0,
+      msg: data.message || data.msg || 'ok',
+      data: data.data,
+    };
   }
   if (data.code !== 0) {
-    throw new Error(data.msg || 'Unknown API Error');
+    throw new Error(data.msg || 'Unknown error');
   }
   return data;
 }

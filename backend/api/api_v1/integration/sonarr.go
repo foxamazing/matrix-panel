@@ -2,7 +2,10 @@ package integration
 
 import (
 	"context"
+	"fmt"
+	"matrix-panel/db"
 	"matrix-panel/lib/integration/sonarr"
+	"matrix-panel/models"
 	"net/http"
 	"time"
 
@@ -18,14 +21,14 @@ func GetSonarrCalendar(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误: " + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "参数错误: " + err.Error()})
 		return
 	}
 
 	// 从数据库获取集成配置
 	integration, err := getSonarrIntegration(req.IntegrationID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "集成不存在"})
+		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": "集成不存在"})
 		return
 	}
 
@@ -38,12 +41,12 @@ func GetSonarrCalendar(c *gin.Context) {
 	end := start.AddDate(0, 0, days)
 
 	// 调用集成方法
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	events, err := integration.GetCalendar(ctx, start, end, req.IncludeUnmonitored)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取日历失败: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "获取日历失败: " + err.Error()})
 		return
 	}
 
@@ -60,22 +63,22 @@ func GetSonarrSeries(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误: " + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "参数错误: " + err.Error()})
 		return
 	}
 
 	integration, err := getSonarrIntegration(req.IntegrationID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "集成不存在"})
+		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": "集成不存在"})
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	series, err := integration.GetSeries(ctx)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取剧集失败: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "获取剧集失败: " + err.Error()})
 		return
 	}
 
@@ -92,22 +95,22 @@ func GetSonarrQueue(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误: " + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "参数错误: " + err.Error()})
 		return
 	}
 
 	integration, err := getSonarrIntegration(req.IntegrationID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "集成不存在"})
+		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": "集成不存在"})
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	queue, err := integration.GetQueue(ctx)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取队列失败: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "获取队列失败: " + err.Error()})
 		return
 	}
 
@@ -125,22 +128,22 @@ func SearchSonarrSeries(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误: " + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "参数错误: " + err.Error()})
 		return
 	}
 
 	integration, err := getSonarrIntegration(req.IntegrationID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "集成不存在"})
+		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": "集成不存在"})
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	results, err := integration.SearchSeries(ctx, req.Query)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "搜索失败: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "搜索失败: " + err.Error()})
 		return
 	}
 
@@ -150,24 +153,43 @@ func SearchSonarrSeries(c *gin.Context) {
 	})
 }
 
+// SonarrTestConnectionHandler 测试 Sonarr 连接
+func SonarrTestConnectionHandler(c *gin.Context) {
+	var req struct {
+		URL     string            `json:"url" binding:"required"`
+		Secrets map[string]string `json:"secrets"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": err.Error()})
+		return
+	}
+
+	s := sonarr.New("", "Test", req.URL, req.Secrets)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := s.TestConnection(ctx); err != nil {
+		c.JSON(http.StatusOK, gin.H{"success": false, "error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "连接成功"})
+}
+
 // getSonarrIntegration 从数据库获取Sonarr集成
 func getSonarrIntegration(id string) (*sonarr.SonarrIntegration, error) {
-	// TODO: 从数据库查询集成配置
-	// 这里需要实现数据库查询逻辑
-	// 临时返回示例,实际应从数据库获取
+	var integration models.Integration
+	if err := db.DB.First(&integration, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	integration.AfterFind()
 
-	// 示例实现:
-	// var integration models.Integration
-	// if err := global.Database.First(&integration, "id = ?", id).Error; err != nil {
-	//     return nil, err
-	// }
-	//
-	// return sonarr.New(
-	//     integration.ID,
-	//     integration.Name,
-	//     integration.URL,
-	//     integration.SecretMap,
-	// ), nil
-
-	return nil, nil // 需要实现
+	return sonarr.New(
+		fmt.Sprintf("%d", integration.ID),
+		integration.Name,
+		integration.URL,
+		integration.SecretMap,
+	), nil
 }

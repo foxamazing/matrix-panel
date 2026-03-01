@@ -203,6 +203,7 @@ export interface AppConfig {
   hiddenStatsCards?: StatCardId[];
 
   // 显示控制
+  uiStyle?: 'glass' | 'minimal' | 'brutal' | 'neumorphic' | 'cyberpunk';
   use12HourFormat?: boolean;
   autoDarkMode?: boolean;
   immersiveMode?: boolean;
