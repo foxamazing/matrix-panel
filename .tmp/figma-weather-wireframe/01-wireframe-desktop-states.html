@@ -1,0 +1,51 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>01_Wireframe_Desktop_1536x864_States</title>
+  <style>
+    :root{--bg:#060d1b;--line:rgba(167,195,236,.24);--g:rgba(15,28,56,.58);--txt:#ecf4ff;--muted:#9ab0d4}
+    *{box-sizing:border-box} body{margin:0;background:radial-gradient(1400px 780px at 70% 20%,#223a70 0%,#091126 56%,#050910 100%);font-family:"PingFang SC","Microsoft YaHei",sans-serif;color:var(--txt)}
+    .page{width:1536px;min-height:864px;margin:0 auto;padding:18px}
+    .label{font-size:12px;color:var(--muted);margin-bottom:10px}
+    .states{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .frame{height:810px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(145deg,rgba(20,36,68,.8),rgba(8,15,33,.84));padding:14px;display:grid;grid-template-rows:auto 1fr}
+    .t{font-size:18px;font-weight:700}.sub{font-size:11px;color:var(--muted)}
+    .layout{margin-top:8px;display:grid;grid-template-rows:44fr 24fr 32fr;gap:8px;min-height:0}
+    .row{min-height:0;border:1px dashed rgba(167,195,236,.26);border-radius:16px;background:rgba(12,23,46,.35);padding:8px}
+    .top{display:grid;grid-template-columns:5fr 4fr 3fr;gap:8px}
+    .mid{display:grid;grid-template-columns:1fr}
+    .bot{display:grid;grid-template-columns:8fr 4fr;gap:8px}
+    .c{border:1px solid var(--line);border-radius:14px;background:var(--g);padding:8px;font-size:12px;line-height:1.4}
+    .dense .c{padding:6px;font-size:11px}
+    .chip{display:inline-block;border:1px solid rgba(167,195,236,.28);border-radius:999px;padding:2px 8px;margin-right:6px;font-size:11px;color:#cfe2ff}
+  </style>
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>`n</head>
+<body>
+  <main class="page">
+    <div class="label">01_Wireframe_Desktop_1536x864：状态帧（Default / Data Dense）</div>
+    <section class="states">
+      <article class="frame">
+        <div><div class="t">Default</div><div class="sub">标准信息密度，优先阅读舒适度</div></div>
+        <div class="layout">
+          <div class="row top"><div class="c">总览卡：城市 / 温度 / 天气 / 体感 / 日出日落 / 风向</div><div class="c">实时指标：湿度、风速、能见度、气压、降水、阵风</div><div class="c">空气质量：AQI + PM2.5 / PM10 / 臭氧 / NO2</div></div>
+          <div class="row mid"><div class="c">24小时卡带（10卡默认，12卡超宽） + 独立降水趋势条</div></div>
+          <div class="row bot"><div class="c">7日趋势（天气图标 + 温带条 + 最低/最高温）</div><div class="c">生活指数（运动/出行/垂钓） + 当前位置</div></div>
+        </div>
+      </article>
+
+      <article class="frame dense">
+        <div><div class="t">Data Dense</div><div class="sub">更高信息密度，保留同一IA结构</div></div>
+        <div style="margin:8px 0 0"><span class="chip">间距 -20%</span><span class="chip">字号 -8%</span><span class="chip">图标 -12%</span><span class="chip">同样无滚动</span></div>
+        <div class="layout">
+          <div class="row top"><div class="c">总览卡：保留全部字段，仅压缩卡片高度与内边距</div><div class="c">实时指标：6 宫格改紧凑布局，单位并排显示</div><div class="c">空气质量：AQI 主卡 + 四项微卡等宽</div></div>
+          <div class="row mid"><div class="c">24小时卡统一紧凑模板，文字不低于 11px；降水趋势固定一行</div></div>
+          <div class="row bot"><div class="c">7日趋势行高缩减，温带条厚度 8→6</div><div class="c">生活指数卡缩减为 3 行 + 1 行位置</div></div>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
+

@@ -1,0 +1,48 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>02_Wireframe_ShortHeight_1536x768</title>
+  <style>
+    :root{--bg:#070d1a;--glass:rgba(15,28,56,.58);--line:rgba(167,195,236,.24);--txt:#eef5ff;--muted:#9ab0d4}
+    *{box-sizing:border-box} body{margin:0;background:radial-gradient(1200px 650px at 70% 20%,#213968 0%,#091126 54%,#050910 100%);font-family:"PingFang SC","Microsoft YaHei",sans-serif;color:var(--txt)}
+    .page{width:1536px;height:768px;margin:0 auto;padding:16px}
+    .board{height:736px;border:1px solid var(--line);border-radius:28px;background:linear-gradient(140deg,rgba(18,33,63,.78),rgba(8,16,34,.8));overflow:hidden}
+    .head{height:72px;border-bottom:1px solid rgba(167,195,236,.18);padding:0 24px;display:flex;align-items:center;justify-content:space-between}.city{font-size:34px;font-weight:800}.sub{font-size:11px;color:var(--muted)}
+    .btn{height:32px;padding:0 12px;border-radius:16px;border:1px solid rgba(167,195,236,.24);background:rgba(255,255,255,.05);display:inline-flex;align-items:center;margin-left:8px;font-size:12px}
+    .content{height:664px;padding:12px;display:grid;grid-template-rows:44fr 24fr 32fr;gap:10px}
+    .r1{display:grid;grid-template-columns:5fr 4fr 3fr;gap:10px;min-height:0}.r2{min-height:0}.r3{display:grid;grid-template-columns:8fr 4fr;gap:10px;min-height:0}
+    .card{border:1px solid var(--line);background:var(--glass);border-radius:20px;padding:10px;min-height:0;overflow:hidden}
+    .small{font-size:10px;color:var(--muted)} .temp{font-size:84px;line-height:.9;font-weight:800}.desc{font-size:32px;font-weight:700}
+    .meta{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:6px}.m{border:1px solid rgba(167,195,236,.2);border-radius:12px;padding:6px;background:rgba(7,14,30,.3);font-size:11px}
+    .m b{display:block;font-size:20px;line-height:1.05;margin-top:2px}
+    .metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}.metric{border:1px solid rgba(167,195,236,.2);border-radius:12px;padding:6px;background:rgba(7,14,30,.3)}
+    .metric .v{font-size:22px;font-weight:800}
+    .hours{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;margin-top:6px}.h{border:1px solid rgba(167,195,236,.2);border-radius:12px;padding:6px 2px;text-align:center;background:rgba(7,14,30,.3);font-size:11px}
+    .rain{height:34px;border:1px solid rgba(167,195,236,.2);border-radius:10px;background:linear-gradient(90deg,rgba(44,109,171,.35),rgba(56,185,255,.26));display:flex;align-items:center;padding:0 10px;font-size:12px;margin-top:6px}
+    .trend{display:grid;gap:6px;margin-top:6px}.line{display:grid;grid-template-columns:52px 16px 1fr 70px;gap:6px;align-items:center;font-size:12px}.bar{height:6px;border-radius:999px;background:rgba(146,173,216,.2)}.fill{height:6px;border-radius:999px;background:linear-gradient(90deg,#34c9ff,#ffd156)}
+    .life-row{height:36px;border:1px solid rgba(167,195,236,.2);border-radius:12px;background:rgba(7,14,30,.3);display:flex;align-items:center;justify-content:space-between;padding:0 10px;margin-top:6px;font-size:13px}
+  </style>
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>`n</head>
+<body>
+  <main class="page">
+    <section class="board">
+      <header class="head">
+        <div><div class="city">金寨县</div><div class="sub">状态帧：Short Height Safe（1536×768，无滚动）</div></div>
+        <div><span class="btn">刷新</span><span class="btn">关闭</span></div>
+      </header>
+      <div class="content">
+        <div class="r1">
+          <article class="card"><div class="small">当前位置</div><div class="temp">11°</div><div class="desc">多云</div><div class="meta"><div class="m">体感<b>10°</b></div><div class="m">紫外线<b style="font-size:15px">4.05 中等</b></div><div class="m">日出<b style="font-size:17px">06:46</b></div><div class="m">日落<b style="font-size:17px">18:14</b></div><div class="m">风向<b style="font-size:17px">东北</b></div></div></article>
+          <article class="card"><div class="small">实时指标</div><div class="metrics"><div class="metric"><div class="small">湿度</div><div class="v">91%</div></div><div class="metric"><div class="small">风速</div><div class="v">6</div></div><div class="metric"><div class="small">能见度</div><div class="v">24km</div></div><div class="metric"><div class="small">气压</div><div class="v">1014</div></div><div class="metric"><div class="small">未来2小时降水</div><div class="v">0mm</div></div><div class="metric"><div class="small">阵风风险</div><div class="v">22低</div></div></div></article>
+          <article class="card"><div class="small">空气质量</div><div class="metric" style="margin-top:6px"><div class="small">AQI</div><div class="v">63</div></div><div class="metrics"><div class="metric"><div class="small">PM2.5</div><div class="v">15</div></div><div class="metric"><div class="small">PM10</div><div class="v">16</div></div><div class="metric"><div class="small">臭氧</div><div class="v">60</div></div><div class="metric"><div class="small">二氧化氮</div><div class="v">13</div></div></div></article>
+        </div>
+        <article class="card r2"><div class="small">24小时预报（短高度默认10卡）</div><div class="hours"><div class="h">现在<br/>☁<br/><b>11°</b></div><div class="h">17:00<br/>☁<br/><b>11°</b></div><div class="h">18:00<br/>☂<br/><b>10°</b></div><div class="h">19:00<br/>☂<br/><b>10°</b></div><div class="h">20:00<br/>☂<br/><b>10°</b></div><div class="h">21:00<br/>☂<br/><b>9°</b></div><div class="h">22:00<br/>☂<br/><b>9°</b></div><div class="h">23:00<br/>☂<br/><b>9°</b></div><div class="h">00:00<br/>☂<br/><b>9°</b></div><div class="h">01:00<br/>☂<br/><b>9°</b></div></div><div class="rain">降水趋势：未来2小时总降水 0 mm · 仅收缩密度，不删模块</div></article>
+        <div class="r3"><article class="card"><div class="small">7日趋势</div><div class="trend"><div class="line"><span>现在</span><span>☂</span><span class="bar"><span class="fill" style="display:block;width:74%"></span></span><span>7°/11°</span></div><div class="line"><span>周日</span><span>☂</span><span class="bar"><span class="fill" style="display:block;width:52%"></span></span><span>7°/9°</span></div><div class="line"><span>周一</span><span>☂</span><span class="bar"><span class="fill" style="display:block;width:36%"></span></span><span>4°/6°</span></div><div class="line"><span>周二</span><span>☁</span><span class="bar"><span class="fill" style="display:block;width:66%"></span></span><span>6°/10°</span></div><div class="line"><span>周三</span><span>☁</span><span class="bar"><span class="fill" style="display:block;width:82%"></span></span><span>5°/13°</span></div><div class="line"><span>周四</span><span>☂</span><span class="bar"><span class="fill" style="display:block;width:70%"></span></span><span>7°/12°</span></div><div class="line"><span>周五</span><span>☁</span><span class="bar"><span class="fill" style="display:block;width:63%"></span></span><span>6°/11°</span></div></div></article><article class="card"><div class="small">生活指数</div><div class="life-row"><span>运动</span><strong>适宜</strong></div><div class="life-row"><span>出行</span><strong>适宜</strong></div><div class="life-row"><span>垂钓</span><strong>适宜</strong></div><div class="life-row"><span>当前位置</span><strong>金寨县</strong></div></article></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
+

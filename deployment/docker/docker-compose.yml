@@ -1,0 +1,20 @@
+services:
+  matrix-panel:
+    image: foxhock/matrix-panel:1.0-dev
+    container_name: matrix-panel
+    privileged: true
+    restart: unless-stopped
+    ports:
+      - "8999:8899"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - matrix-panel-conf:/app/conf
+      - matrix-panel-db:/app/database
+      - matrix-panel-uploads:/app/uploads
+      - matrix-panel-runtime:/app/runtime
+
+volumes:
+  matrix-panel-conf:
+  matrix-panel-db:
+  matrix-panel-uploads:
+  matrix-panel-runtime:

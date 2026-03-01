@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   1. CORE VARIABLES & THEME CONFIG
+   ========================================================================== */
+:root {
+  /* 基础颜色变量 (Fallback / Static) */
+  --background: #ffffff;
+  --foreground: #1d1d1f;
+
+  /* 动态主题色 (由 JS 注入) */
+  --color-theme: #71717a;
+  --color-theme-soft: rgba(113, 113, 122, 0.1);
+  --color-theme-active: #71717a;
+
+  /* 语义化组件变量 (由 JS 注入，这里提供默认值以防万一) */
+  --theme-bg: rgba(255, 255, 255, 0.65);
+  --theme-fg: #1d1d1f;
+  --theme-border: rgba(255, 255, 255, 0.2);
+  --theme-border-highlight: rgba(255, 255, 255, 0.5);
+  --theme-blur: 20px;
+  --theme-radius: 1.5rem;
+  --theme-border-width: 1px;
+  --theme-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  --theme-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+  --text-primary: var(--theme-fg);
+  --text-secondary: color-mix(in srgb, var(--theme-fg), transparent 35%);
+  --text-muted: color-mix(in srgb, var(--theme-fg), transparent 55%);
+
+  --glass-bg-base: var(--theme-bg);
+  --glass-bg-hover: color-mix(in srgb, var(--theme-bg), white 8%);
+  --glass-border: var(--theme-border);
+}
+
+.dark {
+  --background: #050505;
+  --foreground: #ffffff;
+}
+
+@theme inline {
+  --font-pixel: "ArkPixelLocal", "Ark Pixel 12px Monospaced ZhCn", monospace;
+  --color-theme: var(--color-theme);
+}
+
+html, body {
+  background-color: var(--background, #000) !important;
+  color: var(--theme-fg);
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  background-color: transparent !important;
+  color: inherit;
+  margin: 0; padding: 0;
+  height: 100%; width: 100%;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   2. COMPONENT UTILITIES
+   ========================================================================== */
+
+/* 统一面板样式 (Base Class) */
+.glass-panel {
+  background-color: var(--theme-bg);
+  color: var(--theme-fg);
+  
+  /* Blur & Backdrop */
+  backdrop-filter: blur(var(--theme-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--theme-blur)) saturate(180%);
+  
+  /* Border & Radius */
+  border: var(--theme-border-width) solid var(--theme-border);
+  border-radius: var(--theme-radius) !important;
+  
+  /* Shadow & Transition */
+  box-shadow: var(--theme-shadow);
+  transition: var(--theme-transition);
+}
+
+.glass-panel:hover {
+  border-color: var(--theme-border-highlight);
+  /* Optional: Add a slight lift or brightness increase if desired, 
+     but let's respect the theme configuration mostly. 
+     We can add a generic hover effect if needed, or rely on JS.
+  */
+}
+
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.3); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(128, 128, 128, 0.5); }
+
+
+/* ==========================================================================
+   3. ANIMATIONS & KEYFRAMES
+   ========================================================================== */
+
+/* Shimmer Animation for Glass */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Float Animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
